@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Cash Flow Proyectado · Tesorería</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Teko:wght@500;600;700&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css?v=1">
+</head>
+<body>
+<div class="page">
+
+  <!-- ═══ TOPBAR ═══ -->
+  <div class="topbar">
+    <div class="brand">
+      <span class="header-title">Cash Flow Proyectado</span>
+      <span class="header-sub" id="hdr-date"></span>
+    </div>
+    <div class="co-switcher-wrap">
+      <div class="co-switcher" role="group" aria-label="Seleccionar empresa">
+        <button class="co-sw tfc active" id="cosw-tfc" onclick="switchCoTab('tfc')">TF Carnes</button>
+        <button class="co-sw tf" id="cosw-tf" onclick="switchCoTab('tf')">Trade Food</button>
+      </div>
+    </div>
+    <div class="topbar-actions">
+      <div class="export-bar">
+        <button class="btn-export btn-export-xls" onclick="exportExcel()">⬇ Excel</button>
+        <button class="btn-export btn-export-pdf" onclick="exportPDF()">🖨 PDF</button>
+      </div>
+      <button class="btn-refresh" id="btn-refresh" onclick="refresh()">↺ Actualizar</button>
+    </div>
+  </div>
+
+  <!-- ═══ SUBBARRA: horizonte + estado de carga ═══ -->
+  <div class="subbar">
+    <div class="horizon-bar">
+      <span class="sec">Horizonte</span>
+      <div class="h-tabs">
+        <button class="h-tab active" onclick="setHorizon(15,this)">15 días</button>
+        <button class="h-tab" onclick="setHorizon(30,this)">30 días</button>
+        <button class="h-tab" onclick="setHorizon(60,this)">60 días</button>
+        <button class="h-tab" onclick="setHorizon(90,this)">90 días</button>
+      </div>
+    </div>
+    <div class="status-bar" id="status-bar"></div>
+  </div>
+
+  <!-- ═══════════════ TF CARNES ═══════════════ -->
+  <div id="co-panel-tfc">
+    <div class="co-header tfc">TF CARNES &nbsp;·&nbsp; <span class="co-header-sub">CASH FLOW PROYECTADO</span></div>
+
+    <div class="kpi-block">
+      <div class="kpi-row">
+        <div class="kpi"><div class="kpi-label">Saldo bancos</div><div class="kpi-value" id="kpi-tfc-bancos">—</div><div class="kpi-sub" id="kpi-tfc-fecha">—</div></div>
+        <div class="kpi"><div class="kpi-label">Acuerdos descubierto</div><div class="kpi-value" id="kpi-tfc-desc">—</div></div>
+        <div class="kpi accent"><div class="kpi-label">Disponible para operar</div><div class="kpi-value" id="kpi-tfc-disp">—</div><div class="kpi-sub" id="kpi-tfc-disp-sub"></div></div>
+      </div>
+      <div class="kpi-row" style="grid-template-columns:repeat(5,1fr)">
+        <div class="kpi"><div class="kpi-label">Cartera cheques</div><div class="kpi-value pos" id="kpi-tfc-cartera">—</div><div class="kpi-sub" id="kpi-tfc-nchq">—</div></div>
+        <div class="kpi"><div class="kpi-label">Saldo BAVSA</div><div class="kpi-value" id="kpi-tfc-bavsa">—</div></div>
+        <div class="kpi accent"><div class="kpi-label">Fondos disponibles</div><div class="kpi-value pos" id="kpi-tfc-cartera-total">—</div><div class="kpi-sub">Cartera + BAVSA</div></div>
+        <div class="kpi"><div class="kpi-label">Chq emitidos (total)</div><div class="kpi-value neg" id="kpi-tfc-emitidos">—</div><div class="kpi-sub" id="kpi-tfc-nemitidos">—</div></div>
+        <div class="kpi"><div class="kpi-label">Cuentas a pagar</div><div class="kpi-value neg" id="kpi-tfc-cpagar">—</div><div class="kpi-sub" id="kpi-tfc-ncpagar">—</div></div>
+      </div>
+    </div>
+
+    <div class="cf-table-wrap"><table>
+      <thead class="thead-tfc"><tr>
+        <th style="text-align:left;min-width:100px">Fecha</th>
+        <th>Saldo inicio</th><th>Chq emitidos</th>
+        <th>Pagos</th><th>Ingresos</th><th>Saldo fin</th><th>Disponible</th>
+      </tr></thead>
+      <tbody id="tbody-tfc"><tr><td colspan="7" class="no-data">Cargando datos...</td></tr></tbody>
+    </table></div>
+
+    <!-- ── Panel con pestañas: Financiera / Modo B / Cargar archivos ── -->
+    <div class="card tabs-card">
+      <div class="tabbar">
+        <button class="tab active" onclick="switchSecTab('tfc','fin',event)">💵 Financiera</button>
+        <button class="tab" onclick="switchSecTab('tfc','mb',event)">⬛ Modo B</button>
+        <button class="tab" onclick="switchSecTab('tfc','up',event)">⚙ Cargar archivos</button>
+      </div>
+
+      <div class="tabpanel active" id="sectab-tfc-fin">
+        <div class="fin-section" id="fin-section-tfc">
+          <div class="fin-header">
+            <span class="fin-title">💵 Compromisos de Efectivo &nbsp;·&nbsp; Financiera</span>
+            <div style="display:flex;align-items:center;gap:10px">
+              <span class="fin-upload-st" id="fin-upload-st-tfc">Sin datos — subí el Excel de compromisos</span>
+              <label class="btn-fin-upload">
+                <input type="file" id="fi-fin-tfc" accept=".xls,.xlsx" style="display:none" onchange="onCompromisosUpload(event)">
+                📄 Subir compromisos
+              </label>
+            </div>
+          </div>
+          <div class="fin-kpi-row">
+            <div class="fin-kpi"><div class="fin-kpi-label">Compromisos</div><div class="fin-kpi-value" id="finkpi-n">—</div></div>
+            <div class="fin-kpi"><div class="fin-kpi-label">Efectivo a entregar</div><div class="fin-kpi-value neg" id="finkpi-efec">—</div></div>
+            <div class="fin-kpi warn"><div class="fin-kpi-label">Costo financiero (3%)</div><div class="fin-kpi-value" id="finkpi-costo">—</div></div>
+            <div class="fin-kpi warn"><div class="fin-kpi-label">Efectivo + costo (3%)</div><div class="fin-kpi-value" id="finkpi-total-costo">—</div></div>
+          </div>
+          <div style="border-top:1px solid var(--border-soft)">
+            <div class="sub-strip">
+              <span class="sub-strip-title">📊 Compromisos de Entrega</span>
+              <span class="sub-strip-note">Fecha de pago y monto a entregar por cliente</span>
+            </div>
+            <div class="fin-table-wrap" style="max-height:280px">
+              <table class="fin-table">
+                <thead><tr>
+                  <th>Cliente</th>
+                  <th>Vto. cheque</th>
+                  <th>Fecha entrega efectivo</th>
+                  <th class="r">Importe a entregar</th>
+                  <th>Estado</th>
+                </tr></thead>
+                <tbody id="fin-tbody-cfo"><tr><td colspan="5" class="fin-empty">Sin datos</td></tr></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="tabpanel" id="sectab-tfc-mb">
+        <div class="mb-section" id="mb-section-tfc">
+          <div class="mb-header">
+            <span class="mb-title">⬛ Modo B</span>
+            <div style="display:flex;align-items:center;gap:10px">
+              <span class="mb-upload-st" id="mb-upload-st-tfc">Sin compromisos cargados</span>
+              <label class="btn-mb-upload">
+                <input type="file" id="fi-mb-tfc" accept=".xls,.xlsx" style="display:none" onchange="onModoBUpload(event,'tfc')">
+                📄 Subir compromisos
+              </label>
+              <div class="modob-cotiz">
+                <span>USD $1 =</span>
+                <input type="number" id="mb-cotiz-tfc" placeholder="cotiz." min="0" step="1" oninput="setModoBCotizacion('tfc',this.value)">
+                <span>ARS</span>
+              </div>
+            </div>
+          </div>
+          <div class="mb-kpi-row">
+            <div class="mb-kpi"><div class="mb-kpi-label">Pesos en caja</div><div class="mb-kpi-value pos" id="mb-kpi-tfc-pesos">—</div></div>
+            <div class="mb-kpi"><div class="mb-kpi-label">Dólares en caja</div><div class="mb-kpi-value pos" id="mb-kpi-tfc-dolares">—</div></div>
+            <div class="mb-kpi"><div class="mb-kpi-label">Cheques Modo B</div><div class="mb-kpi-value pos" id="mb-kpi-tfc-cheques">—</div></div>
+            <div class="mb-kpi"><div class="mb-kpi-label">Total equiv. pesos</div><div class="mb-kpi-value pos" id="mb-kpi-tfc-total">—</div><div class="mb-kpi-sub" id="mb-kpi-tfc-total-sub"></div></div>
+          </div>
+          <div class="mb-kpi-row" style="border-top:1px solid rgba(255,255,255,.08)">
+            <div class="mb-kpi"><div class="mb-kpi-label">⚠ Vencido</div><div class="mb-kpi-value" id="mb-kpi-tfc-vencido">—</div></div>
+            <div class="mb-kpi"><div class="mb-kpi-label">Próx. 7 días</div><div class="mb-kpi-value" id="mb-kpi-tfc-d7">—</div></div>
+            <div class="mb-kpi"><div class="mb-kpi-label">Próx. 15 días</div><div class="mb-kpi-value" id="mb-kpi-tfc-d15">—</div></div>
+            <div class="mb-kpi"><div class="mb-kpi-label">Más de 15 días</div><div class="mb-kpi-value" id="mb-kpi-tfc-d15plus">—</div></div>
+            <div class="mb-kpi total"><div class="mb-kpi-label">Total compromisos</div><div class="mb-kpi-value neg" id="mb-kpi-tfc-total-venc">—</div></div>
+          </div>
+          <div class="sub-strip">
+            <span class="sub-strip-title">📋 Compromisos de Pago</span>
+            <span class="sub-strip-note">Proveedor · Fecha · Importe</span>
+          </div>
+          <div class="mb-table-wrap">
+            <table class="mb-table">
+              <thead><tr>
+                <th>Proveedor / Destino</th><th>Fecha pago</th><th class="r">Días</th><th class="r">Importe</th>
+              </tr></thead>
+              <tbody id="mb-tbody-tfc"><tr><td colspan="4" class="mb-empty">Sin datos</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div class="tabpanel" id="sectab-tfc-up">
+        <div class="upload-grid">
+          <div class="upload-row">
+            <div class="upload-info"><div class="upload-name">Ingresos esperados</div><div class="upload-st" id="ust-cob-tfc">Sin ingresos ingresados</div></div>
+            <button class="btn-rev" onclick="openPanel('tfc','cob')">+ Ingresar</button>
+          </div>
+          <div class="upload-row">
+            <div class="upload-info"><div class="upload-name">Cuentas a pagar</div><div class="upload-st" id="ust-prov-tfc">Sin datos</div></div>
+            <div style="display:flex;gap:6px;align-items:center">
+              <label class="upload-zone-sm" id="uz-prov-tfc" onclick="document.getElementById('fi-prov-tfc').click()">
+                <input type="file" id="fi-prov-tfc" accept=".xls,.xlsx,.csv" style="display:none" onchange="onProvUpload(event,'tfc')">
+                📄 Subir XLS
+              </label>
+              <button class="btn-rev" id="btn-rev-prov-tfc" onclick="openPanel('tfc','prov')" style="display:none">✎ Revisar</button>
+            </div>
+          </div>
+          <div class="upload-row">
+            <div class="upload-info"><div class="upload-name">Cheques cartera</div><div class="upload-st" id="ust-chq-tfc">Sin datos</div></div>
+            <label class="upload-zone-sm" id="uz-chq-tfc" onclick="document.getElementById('fi-chq-tfc').click()">
+              <input type="file" id="fi-chq-tfc" accept=".xlsx" style="display:none" onchange="onChqUpload(event,'tfc')">
+              📄 Subir banco
+            </label>
+          </div>
+          <div class="upload-row">
+            <div class="upload-info"><div class="upload-name">Compromisos efectivo</div><div class="upload-st" id="ust-fin-tfc">Sin datos</div></div>
+            <label class="upload-zone-sm" onclick="document.getElementById('fi-fin-tfc').click()" id="uz-fin-tfc">📄 Subir XLS</label>
+          </div>
+          <div class="upload-row">
+            <div class="upload-info"><div class="upload-name">Modo B</div><div class="upload-st" id="ust-mb-tfc">Sin datos</div></div>
+            <label class="upload-zone-sm" onclick="document.getElementById('fi-mb-tfc').click()">📄 Subir XLS</label>
+          </div>
+        </div>
+        <div class="upload-group xlsm-fb" id="xlsm-fb-tfc" style="display:none">
+          <div class="upload-lbl">Tesorería (respaldo)</div>
+          <label class="upload-zone-sm" onclick="document.getElementById('fi-xlsm-tfc').click()">
+            <input type="file" id="fi-xlsm-tfc" accept=".xlsm,.xlsx" style="display:none" onchange="onXLSMUpload(event,'tfc')">
+            📊 Subir xlsm
+          </label>
+          <div class="upload-st err" id="xlsm-fb-msg-tfc">Sin acceso al Sheet</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════ TRADE FOOD ═══════════════ -->
+  <div id="co-panel-tf" style="display:none">
+    <div class="co-header tf">TRADE FOOD &nbsp;·&nbsp; <span class="co-header-sub">CASH FLOW PROYECTADO</span></div>
+
+    <div class="kpi-block">
+      <div class="kpi-row">
+        <div class="kpi"><div class="kpi-label">Saldo bancos</div><div class="kpi-value" id="kpi-tf-bancos">—</div><div class="kpi-sub" id="kpi-tf-fecha">—</div></div>
+        <div class="kpi"><div class="kpi-label">Acuerdos descubierto</div><div class="kpi-value" id="kpi-tf-desc">—</div></div>
+        <div class="kpi accent"><div class="kpi-label">Disponible para operar</div><div class="kpi-value" id="kpi-tf-disp">—</div><div class="kpi-sub" id="kpi-tf-disp-sub"></div></div>
+      </div>
+      <div class="kpi-row">
+        <div class="kpi"><div class="kpi-label">Cartera cheques</div><div class="kpi-value pos" id="kpi-tf-cartera">—</div><div class="kpi-sub" id="kpi-tf-nchq">—</div></div>
+        <div class="kpi"><div class="kpi-label">Chq emitidos (total)</div><div class="kpi-value neg" id="kpi-tf-emitidos">—</div><div class="kpi-sub" id="kpi-tf-nemitidos">—</div></div>
+        <div class="kpi"><div class="kpi-label">Cuentas a pagar</div><div class="kpi-value neg" id="kpi-tf-cpagar">—</div><div class="kpi-sub" id="kpi-tf-ncpagar">—</div></div>
+      </div>
+    </div>
+
+    <div class="cf-table-wrap"><table>
+      <thead class="thead-tf"><tr>
+        <th style="text-align:left;min-width:100px">Fecha</th>
+        <th>Saldo inicio</th><th>Chq emitidos</th>
+        <th>Pagos</th><th>Ingresos</th><th>Saldo fin</th><th>Disponible</th>
+      </tr></thead>
+      <tbody id="tbody-tf"><tr><td colspan="7" class="no-data">Cargando datos...</td></tr></tbody>
+    </table></div>
+
+    <div class="card tabs-card">
+      <div class="tabbar">
+        <button class="tab active" onclick="switchSecTab('tf','mb',event)">⬛ Modo B</button>
+        <button class="tab" onclick="switchSecTab('tf','up',event)">⚙ Cargar archivos</button>
+      </div>
+
+      <div class="tabpanel active" id="sectab-tf-mb">
+        <div class="mb-section" id="mb-section-tf">
+          <div class="mb-header">
+            <span class="mb-title">⬛ Modo B</span>
+            <div style="display:flex;align-items:center;gap:10px">
+              <span class="mb-upload-st" id="mb-upload-st-tf">Sin compromisos cargados</span>
+              <label class="btn-mb-upload">
+                <input type="file" id="fi-mb-tf" accept=".xls,.xlsx" style="display:none" onchange="onModoBUpload(event,'tf')">
+                📄 Subir compromisos
+              </label>
+              <div class="modob-cotiz">
+                <span>USD $1 =</span>
+                <input type="number" id="mb-cotiz-tf" placeholder="cotiz." min="0" step="1" oninput="setModoBCotizacion('tf',this.value)">
+                <span>ARS</span>
+              </div>
+            </div>
+          </div>
+          <div class="mb-kpi-row">
+            <div class="mb-kpi"><div class="mb-kpi-label">Pesos en caja</div><div class="mb-kpi-value pos" id="mb-kpi-tf-pesos">—</div></div>
+            <div class="mb-kpi"><div class="mb-kpi-label">Dólares en caja</div><div class="mb-kpi-value pos" id="mb-kpi-tf-dolares">—</div></div>
+            <div class="mb-kpi"><div class="mb-kpi-label">Cheques Modo B</div><div class="mb-kpi-value pos" id="mb-kpi-tf-cheques">—</div></div>
+            <div class="mb-kpi"><div class="mb-kpi-label">Total equiv. pesos</div><div class="mb-kpi-value pos" id="mb-kpi-tf-total">—</div><div class="mb-kpi-sub" id="mb-kpi-tf-total-sub"></div></div>
+          </div>
+          <div class="mb-kpi-row" style="border-top:1px solid rgba(255,255,255,.08)">
+            <div class="mb-kpi"><div class="mb-kpi-label">⚠ Vencido</div><div class="mb-kpi-value" id="mb-kpi-tf-vencido">—</div></div>
+            <div class="mb-kpi"><div class="mb-kpi-label">Próx. 7 días</div><div class="mb-kpi-value" id="mb-kpi-tf-d7">—</div></div>
+            <div class="mb-kpi"><div class="mb-kpi-label">Próx. 15 días</div><div class="mb-kpi-value" id="mb-kpi-tf-d15">—</div></div>
+            <div class="mb-kpi"><div class="mb-kpi-label">Más de 15 días</div><div class="mb-kpi-value" id="mb-kpi-tf-d15plus">—</div></div>
+            <div class="mb-kpi total"><div class="mb-kpi-label">Total compromisos</div><div class="mb-kpi-value neg" id="mb-kpi-tf-total-venc">—</div></div>
+          </div>
+          <div class="sub-strip">
+            <span class="sub-strip-title">📋 Compromisos de Pago</span>
+            <span class="sub-strip-note">Proveedor · Fecha · Importe</span>
+          </div>
+          <div class="mb-table-wrap">
+            <table class="mb-table">
+              <thead><tr>
+                <th>Proveedor / Destino</th><th>Fecha pago</th><th class="r">Días</th><th class="r">Importe</th>
+              </tr></thead>
+              <tbody id="mb-tbody-tf"><tr><td colspan="4" class="mb-empty">Sin datos</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div class="tabpanel" id="sectab-tf-up">
+        <div class="upload-grid">
+          <div class="upload-row">
+            <div class="upload-info"><div class="upload-name">Ingresos esperados</div><div class="upload-st" id="ust-cob-tf">Sin ingresos ingresados</div></div>
+            <button class="btn-rev" onclick="openPanel('tf','cob')">+ Ingresar</button>
+          </div>
+          <div class="upload-row">
+            <div class="upload-info"><div class="upload-name">Cuentas a pagar</div><div class="upload-st" id="ust-prov-tf">Sin datos</div></div>
+            <div style="display:flex;gap:6px;align-items:center">
+              <label class="upload-zone-sm tf" id="uz-prov-tf" onclick="document.getElementById('fi-prov-tf').click()">
+                <input type="file" id="fi-prov-tf" accept=".xls,.xlsx,.csv" style="display:none" onchange="onProvUpload(event,'tf')">
+                📄 Subir XLS
+              </label>
+              <button class="btn-rev" id="btn-rev-prov-tf" onclick="openPanel('tf','prov')" style="display:none">✎ Revisar</button>
+            </div>
+          </div>
+          <div class="upload-row">
+            <div class="upload-info"><div class="upload-name">Cheques cartera</div><div class="upload-st" id="ust-chq-tf">Sin datos</div></div>
+            <label class="upload-zone-sm tf" id="uz-chq-tf" onclick="document.getElementById('fi-chq-tf').click()">
+              <input type="file" id="fi-chq-tf" accept=".xlsx" style="display:none" onchange="onChqUpload(event,'tf')">
+              📄 Subir banco
+            </label>
+          </div>
+          <div class="upload-row">
+            <div class="upload-info"><div class="upload-name">Modo B</div><div class="upload-st" id="ust-mb-tf">Sin datos</div></div>
+            <label class="upload-zone-sm tf" onclick="document.getElementById('fi-mb-tf').click()">📄 Subir XLS</label>
+          </div>
+        </div>
+        <div class="upload-group xlsm-fb" id="xlsm-fb-tf" style="display:none">
+          <div class="upload-lbl">Tesorería (respaldo)</div>
+          <label class="upload-zone-sm tf" onclick="document.getElementById('fi-xlsm-tf').click()">
+            <input type="file" id="fi-xlsm-tf" accept=".xlsm,.xlsx" style="display:none" onchange="onXLSMUpload(event,'tf')">
+            📊 Subir xlsm
+          </label>
+          <div class="upload-st err" id="xlsm-fb-msg-tf">Sin acceso al Sheet</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ RESUMEN DE POSICIÓN (comparte ambas empresas, no cambia con el switch) ═══ -->
+  <div class="card resumen-section" id="resumen-section">
+    <div class="card-head resumen-header">
+      <div class="card-title-group">
+        <span class="card-title">📊 Resumen de Posición</span>
+        <span class="card-title-note">TF Carnes · Trade Food</span>
+      </div>
+      <button onclick="renderResumen()" class="btn-resumen-refresh">↺ Actualizar</button>
+    </div>
+    <div class="resumen-body">
+      <table class="resumen-table" id="resumen-table">
+        <tbody>
+          <tr><td colspan="3" style="padding:18px;text-align:center;color:var(--ink-faint);font-size:12px">Cargando resumen…</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ═══ DETALLE (comparte ambas empresas) ═══ -->
+  <div class="detail-section" id="detail-section">
+    <div class="detail-tabs">
+      <button class="dtab active" id="dtab-cartera" onclick="switchDTab('cartera')">📋 Cartera de Cheques</button>
+      <button class="dtab" id="dtab-pagos" onclick="switchDTab('pagos')">🧾 Cuentas a Pagar</button>
+      <div style="flex:1"></div>
+      <div class="detail-sel-bar" id="dsel-bar" style="display:none">
+        <span id="dsel-info"></span>
+        <button class="btn-dsel-clear" onclick="clearDSel()">✕ Limpiar</button>
+      </div>
+    </div>
+
+    <div class="detail-filters" id="detail-filters">
+      <select class="df-select" id="df-empresa" onchange="renderDetail()" style="display:none">
+        <option value="">Ambas empresas</option>
+        <option value="tfc">TF Carnes</option>
+        <option value="tf">Trade Food</option>
+      </select>
+      <input class="df-input" id="df-search" type="text" placeholder="Buscar…" oninput="renderDetail()">
+      <label class="df-lbl">Desde <input class="df-input" id="df-desde" type="date" onchange="renderDetail()" style="width:130px"></label>
+      <label class="df-lbl">Hasta <input class="df-input" id="df-hasta" type="date" onchange="renderDetail()" style="width:130px"></label>
+      <button class="btn-df-clear" onclick="clearDFilters()">✕ Limpiar filtros</button>
+      <span class="df-count" id="df-count"></span>
+    </div>
+
+    <div class="detail-wrap" id="detail-wrap">
+      <table class="detail-table" id="detail-table">
+        <thead id="detail-thead"><tr><td>—</td></tr></thead>
+        <tbody id="detail-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+</div><!-- /page -->
+
+<!-- PANEL OVERLAY -->
+<div class="ov-overlay" id="ov-overlay" onclick="closePanel()"></div>
+<div class="ov-panel" id="ov-panel">
+  <div class="ov-head">
+    <div class="ov-title" id="ov-title">Panel</div>
+    <button class="ov-close" onclick="closePanel()">×</button>
+  </div>
+  <div class="ov-body" id="ov-body"></div>
+</div>
+
+<script>
+  // Pestañas de Financiera/Modo B/Cargar archivos por empresa — UI pura,
+  // no toca nada de app.js/app-patches.js.
+  function switchSecTab(co, name, evt){
+    const card = evt.currentTarget.closest('.tabs-card');
+    card.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+    card.querySelectorAll('.tabpanel').forEach(p=>p.classList.remove('active'));
+    evt.currentTarget.classList.add('active');
+    document.getElementById('sectab-'+co+'-'+name).classList.add('active');
+  }
+</script>
+
+<script src="js/app.js?v=1"></script>
+<script src="js/app-patches.js?v=1"></script>
+</body>
+</html>
