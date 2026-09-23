@@ -237,6 +237,10 @@ tr:not(.weekend):not(.feriado):hover td{background:var(--surface-2)}
 .resumen-header .card-title-note{color:var(--topbar-ink-soft)}
 .btn-resumen-refresh{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);color:var(--topbar-ink);font-size:11px;padding:6px 13px;border-radius:6px;cursor:pointer;font-family:inherit}
 .btn-resumen-refresh:hover{background:rgba(255,255,255,.18)}
+.rs-mode-tabs{display:flex;align-items:center;gap:2px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:999px;padding:2px}
+.rs-mtab{padding:6px 16px;border:none;border-radius:999px;font-size:11px;font-weight:700;letter-spacing:.03em;cursor:pointer;transition:background .15s,color .15s;color:var(--topbar-ink-soft);background:transparent;font-family:inherit}
+.rs-mtab:hover:not(.active){color:var(--topbar-ink)}
+.rs-mtab.active{background:rgba(255,255,255,.16);color:var(--topbar-ink)}
 .resumen-body{overflow-x:auto}
 .resumen-table{width:100%;border-collapse:collapse;font-size:12.5px;font-family:inherit}
 .resumen-table th,.resumen-table td{padding:8px 14px;text-align:right;border-bottom:1px solid var(--border-soft)}
