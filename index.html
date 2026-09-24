@@ -9,7 +9,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Teko:wght@500;600;700&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/style.css?v=8">
+<link rel="stylesheet" href="css/style.css?v=9">
 </head>
 <body>
 <div class="page">
@@ -58,16 +58,16 @@
 
         <div class="kpi-block">
           <div class="kpi-row">
-            <div class="kpi"><div class="kpi-label">Saldo bancos</div><div class="kpi-value" id="kpi-tfc-bancos">—</div><div class="kpi-sub" id="kpi-tfc-fecha">—</div></div>
-            <div class="kpi"><div class="kpi-label">Acuerdos descubierto</div><div class="kpi-value" id="kpi-tfc-desc">—</div></div>
-            <div class="kpi accent"><div class="kpi-label">Disponible para operar</div><div class="kpi-value" id="kpi-tfc-disp">—</div><div class="kpi-sub" id="kpi-tfc-disp-sub"></div></div>
+            <div class="kpi kpi-click" onclick="verKpi('tfc','bancos')"><div class="kpi-label">Saldo bancos ↗</div><div class="kpi-value" id="kpi-tfc-bancos">—</div><div class="kpi-sub" id="kpi-tfc-fecha">—</div></div>
+            <div class="kpi kpi-click" onclick="verKpi('tfc','desc')"><div class="kpi-label">Acuerdos descubierto ↗</div><div class="kpi-value" id="kpi-tfc-desc">—</div></div>
+            <div class="kpi accent kpi-click" onclick="verKpi('tfc','disp')"><div class="kpi-label">Disponible para operar ↗</div><div class="kpi-value" id="kpi-tfc-disp">—</div><div class="kpi-sub" id="kpi-tfc-disp-sub"></div></div>
           </div>
           <div class="kpi-row kpi-row-5">
-            <div class="kpi"><div class="kpi-label">Cartera cheques</div><div class="kpi-value pos" id="kpi-tfc-cartera">—</div><div class="kpi-sub" id="kpi-tfc-nchq">—</div></div>
-            <div class="kpi"><div class="kpi-label">Saldo BAVSA</div><div class="kpi-value" id="kpi-tfc-bavsa">—</div></div>
-            <div class="kpi accent"><div class="kpi-label">Fondos disponibles</div><div class="kpi-value pos" id="kpi-tfc-cartera-total">—</div><div class="kpi-sub">Cartera + BAVSA</div></div>
-            <div class="kpi"><div class="kpi-label">Chq emitidos (total)</div><div class="kpi-value neg" id="kpi-tfc-emitidos">—</div><div class="kpi-sub" id="kpi-tfc-nemitidos">—</div></div>
-            <div class="kpi"><div class="kpi-label">Cuentas a pagar</div><div class="kpi-value neg" id="kpi-tfc-cpagar">—</div><div class="kpi-sub" id="kpi-tfc-ncpagar">—</div></div>
+            <div class="kpi kpi-click" onclick="verKpi('tfc','cartera')"><div class="kpi-label">Cartera cheques ↗</div><div class="kpi-value pos" id="kpi-tfc-cartera">—</div><div class="kpi-sub" id="kpi-tfc-nchq">—</div></div>
+            <div class="kpi kpi-click" onclick="verKpi('tfc','bavsa')"><div class="kpi-label">Saldo BAVSA ↗</div><div class="kpi-value" id="kpi-tfc-bavsa">—</div></div>
+            <div class="kpi accent kpi-click" onclick="verKpi('tfc','fondos')"><div class="kpi-label">Fondos disponibles ↗</div><div class="kpi-value pos" id="kpi-tfc-cartera-total">—</div><div class="kpi-sub">Cartera + BAVSA</div></div>
+            <div class="kpi kpi-click" onclick="verKpi('tfc','emitidos')"><div class="kpi-label">Chq emitidos (total) ↗</div><div class="kpi-value neg" id="kpi-tfc-emitidos">—</div><div class="kpi-sub" id="kpi-tfc-nemitidos">—</div></div>
+            <div class="kpi kpi-click" onclick="verKpi('tfc','cpagar')"><div class="kpi-label">Cuentas a pagar ↗</div><div class="kpi-value neg" id="kpi-tfc-cpagar">—</div><div class="kpi-sub" id="kpi-tfc-ncpagar">—</div></div>
           </div>
         </div>
 
@@ -121,10 +121,10 @@
         </div>
       </div>
       <div class="fin-kpi-row">
-        <div class="fin-kpi"><div class="fin-kpi-label">Compromisos</div><div class="fin-kpi-value" id="finkpi-n">—</div></div>
-        <div class="fin-kpi"><div class="fin-kpi-label">Efectivo a entregar</div><div class="fin-kpi-value neg" id="finkpi-efec">—</div></div>
-        <div class="fin-kpi warn"><div class="fin-kpi-label">Costo financiero (3%)</div><div class="fin-kpi-value" id="finkpi-costo">—</div></div>
-        <div class="fin-kpi warn"><div class="fin-kpi-label">Efectivo + costo (3%)</div><div class="fin-kpi-value" id="finkpi-total-costo">—</div></div>
+        <div class="fin-kpi kpi-click" onclick="verKpi('tfc','finn')"><div class="fin-kpi-label">Compromisos ↗</div><div class="fin-kpi-value" id="finkpi-n">—</div></div>
+        <div class="fin-kpi kpi-click" onclick="verKpi('tfc','finefec')"><div class="fin-kpi-label">Efectivo a entregar ↗</div><div class="fin-kpi-value neg" id="finkpi-efec">—</div></div>
+        <div class="fin-kpi warn kpi-click" onclick="verKpi('tfc','fincosto')"><div class="fin-kpi-label">Costo financiero (3%) ↗</div><div class="fin-kpi-value" id="finkpi-costo">—</div></div>
+        <div class="fin-kpi warn kpi-click" onclick="verKpi('tfc','fintotal')"><div class="fin-kpi-label">Efectivo + costo (3%) ↗</div><div class="fin-kpi-value" id="finkpi-total-costo">—</div></div>
       </div>
       <div style="border-top:1px solid var(--border-soft)">
         <div class="sub-strip">
@@ -199,14 +199,14 @@
 
         <div class="kpi-block">
           <div class="kpi-row">
-            <div class="kpi"><div class="kpi-label">Saldo bancos</div><div class="kpi-value" id="kpi-tf-bancos">—</div><div class="kpi-sub" id="kpi-tf-fecha">—</div></div>
-            <div class="kpi"><div class="kpi-label">Acuerdos descubierto</div><div class="kpi-value" id="kpi-tf-desc">—</div></div>
-            <div class="kpi accent"><div class="kpi-label">Disponible para operar</div><div class="kpi-value" id="kpi-tf-disp">—</div><div class="kpi-sub" id="kpi-tf-disp-sub"></div></div>
+            <div class="kpi kpi-click" onclick="verKpi('tf','bancos')"><div class="kpi-label">Saldo bancos ↗</div><div class="kpi-value" id="kpi-tf-bancos">—</div><div class="kpi-sub" id="kpi-tf-fecha">—</div></div>
+            <div class="kpi kpi-click" onclick="verKpi('tf','desc')"><div class="kpi-label">Acuerdos descubierto ↗</div><div class="kpi-value" id="kpi-tf-desc">—</div></div>
+            <div class="kpi accent kpi-click" onclick="verKpi('tf','disp')"><div class="kpi-label">Disponible para operar ↗</div><div class="kpi-value" id="kpi-tf-disp">—</div><div class="kpi-sub" id="kpi-tf-disp-sub"></div></div>
           </div>
           <div class="kpi-row">
-            <div class="kpi"><div class="kpi-label">Cartera cheques</div><div class="kpi-value pos" id="kpi-tf-cartera">—</div><div class="kpi-sub" id="kpi-tf-nchq">—</div></div>
-            <div class="kpi"><div class="kpi-label">Chq emitidos (total)</div><div class="kpi-value neg" id="kpi-tf-emitidos">—</div><div class="kpi-sub" id="kpi-tf-nemitidos">—</div></div>
-            <div class="kpi"><div class="kpi-label">Cuentas a pagar</div><div class="kpi-value neg" id="kpi-tf-cpagar">—</div><div class="kpi-sub" id="kpi-tf-ncpagar">—</div></div>
+            <div class="kpi kpi-click" onclick="verKpi('tf','cartera')"><div class="kpi-label">Cartera cheques ↗</div><div class="kpi-value pos" id="kpi-tf-cartera">—</div><div class="kpi-sub" id="kpi-tf-nchq">—</div></div>
+            <div class="kpi kpi-click" onclick="verKpi('tf','emitidos')"><div class="kpi-label">Chq emitidos (total) ↗</div><div class="kpi-value neg" id="kpi-tf-emitidos">—</div><div class="kpi-sub" id="kpi-tf-nemitidos">—</div></div>
+            <div class="kpi kpi-click" onclick="verKpi('tf','cpagar')"><div class="kpi-label">Cuentas a pagar ↗</div><div class="kpi-value neg" id="kpi-tf-cpagar">—</div><div class="kpi-sub" id="kpi-tf-ncpagar">—</div></div>
           </div>
         </div>
 
@@ -341,6 +341,9 @@
       <p>"TF Carnes" y "Trade Food" son dos empresas separadas, cada una con sus propios
       Sheets y sus propios archivos subidos — nunca se mezclan datos de una con la otra,
       salvo en el Resumen de Posición, que las muestra a las dos lado a lado para comparar.</p>
+      <p>Casi todas las tarjetas de número (KPIs de arriba y de Financiera) tienen una
+      flechita "↗" y son clickeables: al tocarlas se abre un detalle con los ítems
+      (bancos, cheques, proveedores, clientes) que suman ese total.</p>
 
       <h2>① Franja de KPIs (arriba de cada empresa)</h2>
       <p>Estos números vienen todos de la misma planilla: el Google Sheet <strong>"Reporte Tesorería"</strong> de cada empresa (uno para TF Carnes, otro para Trade Food — no es el mismo Sheet). Tiene una fila por banco y una fila "TOTAL".</p>
@@ -578,6 +581,27 @@
   </div>
 </div>
 
+<!-- MODAL DETALLE DE KPI — se llena con verKpi() (js/app-patches.js) al
+     tocar cualquier tarjeta de la franja de KPIs o de Financiera. Reutiliza
+     el mismo shell que Léeme/Cargar archivos. -->
+<div class="leeme-overlay" id="kpi-overlay" onclick="if(event.target===this)cerrarKpiModal()">
+  <div class="leeme-modal">
+    <div class="leeme-head">
+      <div>
+        <div class="leeme-head-title" id="kpi-modal-title">Detalle</div>
+        <div class="leeme-head-sub" id="kpi-modal-sub"></div>
+      </div>
+      <button class="leeme-close" onclick="cerrarKpiModal()">×</button>
+    </div>
+    <div class="leeme-body">
+      <table class="kd-table">
+        <thead><tr><th>Cliente / banco</th><th id="kpi-modal-col2">Detalle</th><th class="r">Filas</th><th class="r">Importe</th></tr></thead>
+        <tbody id="kpi-modal-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
 <script>
   // Modal Léeme — UI pura, no toca nada de app.js/app-patches.js.
   function openLeeme(){
@@ -601,6 +625,6 @@
 </script>
 
 <script src="js/app.js?v=1"></script>
-<script src="js/app-patches.js?v=6"></script>
+<script src="js/app-patches.js?v=7"></script>
 </body>
 </html>

@@ -367,6 +367,21 @@ tr:not(.weekend):not(.feriado):hover td{background:var(--surface-2)}
 .leeme-warn strong{color:var(--warn)}
 @media(max-width:640px){ .leeme-body{padding:8px 16px 28px} .leeme-head{padding:14px 16px} }
 
+/* ═══ MODAL KPI (detalle de cada tarjeta clickeable) ═══════════════════ */
+/* Reutiliza el mismo shell que Léeme/Cargar archivos (.leeme-overlay,
+   .leeme-modal, .leeme-head, .leeme-close) — solo agrega la tabla. */
+.kpi-click{cursor:pointer;transition:background .12s}
+.kpi-click:hover{background:var(--surface-2)}
+.kd-table{width:100%;border-collapse:collapse;font-size:12.5px}
+.kd-table th{text-align:left;padding:8px 14px;background:var(--surface-2);font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;color:var(--ink-soft);border-bottom:1px solid var(--border)}
+.kd-table th.r{text-align:right}
+.kd-table td{padding:8px 14px;border-bottom:1px solid var(--border-soft);color:var(--ink-soft);vertical-align:top}
+.kd-table td:first-child{color:var(--ink);font-weight:600}
+.kd-table td.r{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.kd-table .kd-razon{font-size:11.5px;color:var(--ink-faint)}
+.kd-table tr:hover td{background:var(--surface-2)}
+@media(max-width:640px){ .kd-table th,.kd-table td{padding:7px 10px} }
+
 .bulk-bar{display:flex;align-items:center;justify-content:space-between;padding:8px 18px;background:rgba(177,97,31,.08);border-bottom:1px solid rgba(177,97,31,.2);flex-shrink:0;min-height:38px;transition:opacity .15s}
 .bulk-bar.hidden{opacity:0;pointer-events:none}
 .bulk-info{font-size:11px;color:var(--warn);font-weight:600}

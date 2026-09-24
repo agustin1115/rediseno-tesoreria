@@ -454,3 +454,156 @@ switchCoTab = function(co){
   _origSwitchCoTab(co);
   cobPlaceResumen(co);
 };
+
+// ── KPIs clickeables: modal con el detalle que compone cada número ─────────
+// Mismo patrón que se agregó en TFcobranzas: cada tarjeta de la franja de
+// KPIs (y de Financiera) abre un modal con la lista de ítems que suman ese
+// total. Ninguna de estas funciones recalcula nada nuevo — todas leen los
+// mismos arrays que ya usa app.js (st[co].bancos, carteraChqs,
+// chequesFisicos, chequesEmitidos, provRaw, compromisos), así que la suma
+// del detalle da exactamente igual al número de la tarjeta.
+function getBancosDetalle(co, campo){
+  let bancos;
+  if (co === 'tfc') {
+    const bs = st.tfc.bancos || [];
+    bancos = bs.filter(b => TFC_OP_BANKS.some(p => p.test(b.nombre)));
+  } else {
+    bancos = st.tf.bancos || [];
+  }
+  return bancos.map(b => ({
+    cliente: b.nombre,
+    razon: campo === 'saldo' ? `Acuerdo: ${fN(b.acuerdo || 0)}` : `Saldo: ${fN(b.saldo || 0)}`,
+    filas: 1,
+    importe: b[campo] || 0,
+  })).sort((a, b) => b.importe - a.importe);
+}
+function getDisponibleDetalle(co){
+  const bancos = co === 'tfc' ? tfcOpBancos().saldo : st.tf.saldoBancos;
+  const desc   = co === 'tfc' ? tfcOpBancos().desc  : st.tf.descubiertos;
+  const rows = [];
+  if (bancos != null) rows.push({ cliente: 'Saldo bancos', razon: '', filas: 1, importe: bancos });
+  if (desc   != null) rows.push({ cliente: 'Acuerdos descubierto', razon: '', filas: 1, importe: desc });
+  return rows;
+}
+function getCarteraDetalle(co){
+  const map = new Map();
+  function add(cliente, importe){
+    const key = cliente || '(sin nombre)';
+    if (!map.has(key)) map.set(key, { cliente: key, importe: 0, filas: 0 });
+    const v = map.get(key);
+    v.importe += importe; v.filas += 1;
+  }
+  (st[co].carteraChqs || []).forEach(r => {
+    const id = chqStableId(co, 'e', r.numero, r.importe || 0);
+    if (!excl[co].chq.has(id)) add(r.razonSocial || r.recibidoDe, r.importe || 0);
+  });
+  (st[co].chequesFisicos || []).forEach(r => {
+    const id = chqStableId(co, 'f', r.numero, r.importe || 0);
+    if (!excl[co].chq.has(id)) add(r.razonSocial || r.recibidoDe, r.importe || 0);
+  });
+  return [...map.values()]
+    .map(v => ({ ...v, razon: `${v.filas} cheque${v.filas > 1 ? 's' : ''}` }))
+    .sort((a, b) => b.importe - a.importe);
+}
+function getBavsaDetalle(co){
+  if (co !== 'tfc') return [];
+  const bv = tfcOpBancos().bavsa;
+  if (!bv) return [];
+  return [{ cliente: bv.nombre, razon: `Acuerdo: ${fN(bv.acuerdo || 0)}`, filas: 1, importe: bv.saldo || 0 }];
+}
+function getFondosDetalle(co){
+  if (co !== 'tfc') return [];
+  const cartera = st.tfc.cartera || 0;
+  const bv = tfcOpBancos().bavsa;
+  const rows = [{ cliente: 'Cartera de cheques', razon: '', filas: 1, importe: cartera }];
+  if (bv) rows.push({ cliente: 'Saldo BAVSA', razon: '', filas: 1, importe: bv.saldo || 0 });
+  return rows;
+}
+function getEmitidosDetalle(co){
+  const map = new Map();
+  (st[co].chequesEmitidos || []).forEach(c => {
+    const key = c.tercero || '(sin beneficiario)';
+    if (!map.has(key)) map.set(key, { cliente: key, importe: 0, filas: 0 });
+    const v = map.get(key);
+    v.importe += c.importe || 0; v.filas += 1;
+  });
+  return [...map.values()]
+    .map(v => ({ ...v, razon: `${v.filas} cheque${v.filas > 1 ? 's' : ''}` }))
+    .sort((a, b) => b.importe - a.importe);
+}
+function getCPagarDetalle(co){
+  const map = new Map();
+  getProv(co).forEach(r => {
+    const key = r.label || '(sin proveedor)';
+    if (!map.has(key)) map.set(key, { cliente: key, importe: 0, filas: 0 });
+    const v = map.get(key);
+    v.importe += r.monto || 0; v.filas += 1;
+  });
+  return [...map.values()]
+    .map(v => ({ ...v, razon: `${v.filas} comprobante${v.filas > 1 ? 's' : ''}` }))
+    .sort((a, b) => b.importe - a.importe);
+}
+function getCompromisosActivos(co){
+  if (co !== 'tfc') return [];
+  return (st.tfc.compromisos || []).filter(c => !_finPagados.has(c.id));
+}
+function getCompromisosDetalle(co){
+  return getCompromisosActivos(co)
+    .map(c => ({ cliente: c.cliente, razon: `Entrega ${fDateShort(c.fechaEntrega)}`, filas: 1, importe: c.importeEfectivo }))
+    .sort((a, b) => b.importe - a.importe);
+}
+function getCostoDetalle(co){
+  return getCompromisosActivos(co)
+    .map(c => ({ cliente: c.cliente, razon: `3% de ${fN(c.importeEfectivo)}`, filas: 1, importe: c.importeEfectivo * FIN_RATE }))
+    .sort((a, b) => b.importe - a.importe);
+}
+function getEfectivoCostoDetalle(co){
+  return getCompromisosActivos(co)
+    .map(c => ({ cliente: c.cliente, razon: `Efectivo ${fN(c.importeEfectivo)} + 3% ${fN(c.importeEfectivo * FIN_RATE)}`, filas: 1, importe: c.importeEfectivo * (1 + FIN_RATE) }))
+    .sort((a, b) => b.importe - a.importe);
+}
+
+const KPI_DETALLE = {
+  bancos:   { titulo: 'Saldo bancos',            col2: 'Acuerdo',   vacio: 'Sin datos de bancos',        get: co => getBancosDetalle(co, 'saldo') },
+  desc:     { titulo: 'Acuerdos descubierto',    col2: 'Saldo',     vacio: 'Sin datos de bancos',        get: co => getBancosDetalle(co, 'acuerdo') },
+  disp:     { titulo: 'Disponible para operar',  col2: 'Detalle',   vacio: 'Sin datos',                  get: getDisponibleDetalle },
+  cartera:  { titulo: 'Cartera cheques',         col2: 'Cantidad',  vacio: 'Sin cheques en cartera',     get: getCarteraDetalle },
+  bavsa:    { titulo: 'Saldo BAVSA',             col2: 'Acuerdo',   vacio: 'Sin datos de BAVSA',         get: getBavsaDetalle },
+  fondos:   { titulo: 'Fondos disponibles',      col2: 'Detalle',   vacio: 'Sin datos',                  get: getFondosDetalle },
+  emitidos: { titulo: 'Chq emitidos (total)',    col2: 'Cantidad',  vacio: 'Sin cheques emitidos',       get: getEmitidosDetalle },
+  cpagar:   { titulo: 'Cuentas a pagar',         col2: 'Cantidad',  vacio: 'Sin cuentas a pagar',        get: getCPagarDetalle },
+  finn:     { titulo: 'Compromisos',             col2: 'Entrega',   vacio: 'Sin compromisos cargados',   get: getCompromisosDetalle },
+  finefec:  { titulo: 'Efectivo a entregar',     col2: 'Entrega',   vacio: 'Sin compromisos cargados',   get: getCompromisosDetalle },
+  fincosto: { titulo: 'Costo financiero (3%)',   col2: 'Cálculo',   vacio: 'Sin compromisos cargados',   get: getCostoDetalle },
+  fintotal: { titulo: 'Efectivo + costo (3%)',   col2: 'Cálculo',   vacio: 'Sin compromisos cargados',   get: getEfectivoCostoDetalle },
+};
+function verKpi(co, tipo){
+  const info = KPI_DETALLE[tipo];
+  if (!info) return;
+  const nombreCo = co === 'tfc' ? 'TF Carnes' : 'Trade Food';
+  abrirKpiModal(`${info.titulo} · ${nombreCo}`, info.get(co), info.vacio, info.col2);
+}
+function abrirKpiModal(titulo, lista, vacioMsg, col2Label){
+  const totalImporte = lista.reduce((s, r) => s + (r.importe || 0), 0);
+  const totalFilas = lista.reduce((s, r) => s + (r.filas || 0), 0);
+  document.getElementById('kpi-modal-title').textContent = titulo;
+  document.getElementById('kpi-modal-sub').textContent =
+    `${lista.length} ítems · ${totalFilas} filas · ${fN(totalImporte)} en total`;
+  const elCol2 = document.getElementById('kpi-modal-col2');
+  if (elCol2) elCol2.textContent = col2Label || 'Detalle';
+  const tbody = document.getElementById('kpi-modal-tbody');
+  tbody.innerHTML = lista.length
+    ? lista.map(r => `<tr>
+        <td>${r.cliente}</td>
+        <td class="kd-razon">${r.razon || '—'}</td>
+        <td class="r">${r.filas || 1}</td>
+        <td class="r">${fN(r.importe)}</td>
+      </tr>`).join('')
+    : `<tr><td colspan="4" style="padding:22px;text-align:center;color:var(--ink-faint);font-size:12px">${vacioMsg}</td></tr>`;
+  document.getElementById('kpi-overlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+function cerrarKpiModal(){
+  document.getElementById('kpi-overlay').classList.remove('open');
+  document.body.style.overflow = '';
+}
