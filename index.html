@@ -9,7 +9,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Teko:wght@500;600;700&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/style.css?v=3">
+<link rel="stylesheet" href="css/style.css?v=4">
 </head>
 <body>
 <div class="page">
@@ -399,6 +399,10 @@
     </div>
   </div>
 
+  <div class="page-footer">
+    <button class="btn-leeme" onclick="openLeeme()">📖 Léeme · de dónde sale cada número</button>
+  </div>
+
 </div><!-- /page -->
 
 <!-- PANEL OVERLAY -->
@@ -411,6 +415,170 @@
   <div class="ov-body" id="ov-body"></div>
 </div>
 
+<!-- MODAL LÉEME — documentación in-app, para quien abre la página por -->
+<!-- primera vez y quiere saber de dónde sale cada número de la pantalla. -->
+<div class="leeme-overlay" id="leeme-overlay" onclick="if(event.target===this)closeLeeme()">
+  <div class="leeme-modal">
+    <div class="leeme-head">
+      <div>
+        <div class="leeme-head-title">📖 Léeme — de dónde sale cada número</div>
+        <div class="leeme-head-sub">Guía completa de esta pantalla, sección por sección</div>
+      </div>
+      <button class="leeme-close" onclick="closeLeeme()">×</button>
+    </div>
+    <div class="leeme-body">
+
+      <p class="lead">Esta página junta datos de <strong>tres tipos de fuente</strong> distintos y los combina.
+      Antes de entrar número por número, conviene tener claro qué es cada tipo, porque
+      vas a verlos mencionados todo el tiempo abajo:</p>
+      <ul>
+        <li><strong>Google Sheet (en vivo)</strong>: una planilla de Google que la página lee directo, cada vez que cargás o apretás "↺ Actualizar" — nadie tiene que subir nada, se lee sola.</li>
+        <li><strong>Excel manual</strong>: un archivo que subís vos con un botón "Subir…" en la pestaña "Cargar archivos" (o en Financiera/Modo B). Queda guardado en tu navegador y también en Supabase, para que no se pierda si cambiás de computadora.</li>
+        <li><strong>Cálculo</strong>: un número que no viene de ningún lado directamente, sino que sale de combinar otros números de acá mismo (por ejemplo, "Disponible para operar" = Saldo bancos + Descubierto).</li>
+      </ul>
+      <p>"TF Carnes" y "Trade Food" son dos empresas separadas, cada una con sus propios
+      Sheets y sus propios archivos subidos — nunca se mezclan datos de una con la otra,
+      salvo en el Resumen de Posición, que las muestra a las dos lado a lado para comparar.</p>
+
+      <h2>① Franja de KPIs (arriba de cada empresa)</h2>
+      <p>Estos números vienen todos de la misma planilla: el Google Sheet <strong>"Reporte Tesorería"</strong> de cada empresa (uno para TF Carnes, otro para Trade Food — no es el mismo Sheet). Tiene una fila por banco y una fila "TOTAL".</p>
+
+      <h3>Saldo bancos</h3>
+      <div class="leeme-flow">Sheet <b>"Reporte Tesorería"</b> <span class="arrow">→</span> fila <b>TOTAL</b>, columna de saldo <span class="arrow">→</span> <code>parseReporte()</code> <span class="arrow">→</span> KPI <b>"Saldo bancos"</b></div>
+      <p>Para <strong>TF Carnes</strong> es un caso especial: en vez de la fila TOTAL de todo el Sheet, se suman <strong>solo</strong> los bancos operativos (Galicia + Macro + CMF) — BAVSA se muestra aparte, no se mezcla acá. Para <strong>Trade Food</strong> sí es directamente la fila TOTAL completa.</p>
+      <p>Si el Sheet no responde, la página usa el último archivo <code>.xlsm</code> que hayas subido a mano como respaldo (mismo formato, mismas dos pestañas del Excel).</p>
+
+      <h3>Acuerdos descubierto</h3>
+      <p>Misma fila TOTAL del Sheet, la columna de al lado del saldo — es el límite de descubierto acordado con el banco.</p>
+
+      <h3>Disponible para operar</h3>
+      <div class="leeme-flow">Saldo bancos <span class="arrow">+</span> Acuerdos descubierto <span class="arrow">=</span> Disponible para operar</div>
+      <p>Es un cálculo, no una fuente nueva. El texto chico de abajo ("Desc. usado: …") solo aparece cuando el saldo de bancos es negativo, y muestra cuánto del descubierto ya está siendo usado.</p>
+
+      <h3>Saldo BAVSA (solo TF Carnes)</h3>
+      <p>También sale del Sheet "Reporte Tesorería" — es la fila del banco "BAVSA" ahí adentro, no una fuente separada. Trade Food no opera con BAVSA, por eso no tiene esta tarjeta.</p>
+
+      <h3>Fondos disponibles (solo TF Carnes)</h3>
+      <div class="leeme-flow">Cartera cheques <span class="arrow">+</span> Saldo BAVSA <span class="arrow">=</span> Fondos disponibles</div>
+
+      <h3>Cartera cheques</h3>
+      <div class="leeme-flow"><b>Excel manual</b> "Cheques cartera" que subís vos <span class="arrow">+</span> (solo TFC) Sheet <b>"Cheques físicos"</b> <span class="arrow">−</span> los que marcaste como excluidos/adjudicados en pantalla <span class="arrow">=</span> Cartera cheques</div>
+      <p>El sub-texto ("19 elect." etc.) cuenta cuántos cheques electrónicos y físicos entran en la suma.</p>
+
+      <h3>Chq emitidos (total)</h3>
+      <div class="leeme-flow">Sheet <b>"Reporte Tesorería"</b>, pestaña <b>"Ch. Emitidos"</b> <span class="arrow">→</span> <code>parseChEmitidos()</code> <span class="arrow">=</span> Chq emitidos (total)</div>
+      <p>Mismo respaldo <code>.xlsm</code> que "Saldo bancos" si el Sheet falla (viene del mismo archivo, otra pestaña).</p>
+
+      <h3>Cuentas a pagar</h3>
+      <div class="leeme-flow"><b>Excel manual</b> "Cuentas a pagar" que subís vos <span class="arrow">−</span> los ítems que excluiste en pantalla <span class="arrow">=</span> Cuentas a pagar</div>
+
+      <h2>② Cash Flow proyectado (la tabla grande, día por día)</h2>
+      <p>Cada fila es un día. Así se arma cada columna:</p>
+      <table class="leeme-table">
+        <thead><tr><th>Columna</th><th>De dónde sale</th></tr></thead>
+        <tbody>
+          <tr><td>Saldo inicio</td><td>El primer día (HOY) es el "Saldo bancos" de arriba. Los demás días es el "Saldo fin" del día anterior — se va arrastrando.</td></tr>
+          <tr><td>Chq emitidos</td><td>Cheques del Sheet "Ch. Emitidos" cuya fecha de débito cae justo ese día.</td></tr>
+          <tr><td>Pagos</td><td>Ítems de Cuentas a pagar (el Excel manual) que vencen ese día, más cualquier pago que hayas cargado a mano desde el panel de Detalle.</td></tr>
+          <tr><td>Ingresos</td><td>Solo tiene valor en <strong>HOY</strong>: es la Cartera de cheques activa — y para TF Carnes, específicamente, es "Fondos disponibles" completo (Cartera + BAVSA), el mismo número que la tarjeta KPI. Del día siguiente en adelante, "Ingresos" queda vacío salvo que hayas cargado un ingreso a mano — no hay ninguna fuente automática de cobranzas futuras en esta tabla (eso es justo lo que trae el Resumen de Posición desde TFcobranzas, más abajo).</td></tr>
+          <tr><td>Saldo fin</td><td>Saldo inicio − Chq emitidos − Pagos + Ingresos.</td></tr>
+          <tr><td>Disponible</td><td>Mismo número que Saldo fin, es la misma columna con otro nombre para dejar claro que es lo que queda disponible ese día.</td></tr>
+        </tbody>
+      </table>
+
+      <h2>③ Financiera · Compromisos de Efectivo <span style="font-weight:400;color:var(--ink-faint);font-size:11px">(solo TF Carnes)</span></h2>
+      <div class="leeme-flow"><b>Excel manual</b> "Subir compromisos" (Cliente / Fecha vto. cheque / Importe) <span class="arrow">→</span> fecha de entrega = vencimiento + 2 días hábiles</div>
+      <table class="leeme-table">
+        <thead><tr><th>KPI</th><th>De dónde sale</th></tr></thead>
+        <tbody>
+          <tr><td>Compromisos</td><td>Cantidad de filas del Excel que no marcaste como "pagado" en la tabla de abajo.</td></tr>
+          <tr><td>Efectivo a entregar</td><td>Suma del importe de esas filas.</td></tr>
+          <tr><td>Costo financiero (3%)</td><td>Efectivo a entregar × 3% — cuenta simple y directa. <strong>No</strong> es el cálculo con tope de $70M/día que arma el plan de cheques del Excel exportable — son dos cuentas distintas a propósito, una para mirar en pantalla y otra para planificar el descuento real.</td></tr>
+          <tr><td>Efectivo + costo (3%)</td><td>Efectivo a entregar + Costo financiero.</td></tr>
+        </tbody>
+      </table>
+
+      <h2>④ Modo B</h2>
+      <div class="leeme-flow">Sheet compartido <b>"resumen"</b> (mismo Sheet ID para las dos empresas, una fila por empresa+concepto) <span class="arrow">→</span> Pesos / Dólares / Cheques en caja</div>
+      <table class="leeme-table">
+        <thead><tr><th>KPI</th><th>De dónde sale</th></tr></thead>
+        <tbody>
+          <tr><td>Pesos / Dólares / Cheques en caja</td><td>Ese Sheet compartido "resumen".</td></tr>
+          <tr><td>Total equiv. pesos</td><td>Pesos + Cheques + (Dólares × la cotización que vos cargás arriba, si la cargaste). La cotización es tuya, no sale de ningún Sheet — queda guardada en tu navegador.</td></tr>
+          <tr><td>Total compromisos (Vencido / 7 / 15 / Más15)</td><td><strong>Excel manual</strong> que subís en esta misma pestaña ("Subir compromisos" de Modo B) — reutiliza el mismo lector que Cuentas a pagar, pero es un archivo distinto.</td></tr>
+        </tbody>
+      </table>
+
+      <h2>⑤ Resumen de Posición — Modo A</h2>
+      <div class="leeme-flow">Bancos <span class="arrow">−</span> Cheques emitidos <span class="arrow">−</span> Cuentas a pagar <span class="arrow">+</span> Cheques en cartera <span class="arrow">+</span> Cobrar <span class="arrow">−</span> Incobrables (A) <span class="arrow">−</span> Incobrables (B) <span class="arrow">=</span> <b>Posición Modo A</b></div>
+      <p>Esta fórmula está <strong>confirmada</strong> contra el ejemplo de referencia que me pasaste.</p>
+      <table class="leeme-table">
+        <thead><tr><th>Fila</th><th>De dónde sale</th></tr></thead>
+        <tbody>
+          <tr><td>Bancos</td><td>Mismo número que "Saldo bancos" de la franja de KPIs (①).</td></tr>
+          <tr><td>Cheques emitidos</td><td>Mismo número que "Chq emitidos (total)" (①).</td></tr>
+          <tr><td>Cuentas a pagar</td><td>Mismo número que "Cuentas a pagar" (①).</td></tr>
+          <tr><td>Cheques en cartera</td><td>Mismo número que "Cartera cheques" (①).</td></tr>
+          <tr><td>Cobrar</td><td>De TFcobranzas — ver ⑦ más abajo.</td></tr>
+          <tr><td>Incobrables (Archivo A) / (Archivo B)</td><td>De TFcobranzas — ver ⑦ más abajo. Se muestran <strong>separados</strong>, no sumados (ver nota en ⑦).</td></tr>
+        </tbody>
+      </table>
+
+      <h2>⑥ Resumen de Posición — Modo B</h2>
+      <div class="leeme-flow">Disponible (Modo B) <span class="arrow">−</span> Cuentas a pagar <span class="arrow">+</span> Cobrar <span class="arrow">−</span> Movidas <span class="arrow">−</span> Incobrables (A) <span class="arrow">−</span> Incobrables (B) <span class="arrow">=</span> <b>Posición Modo B</b></div>
+      <div class="leeme-warn"><strong>Ojo:</strong> a diferencia de Modo A, esta fórmula es una inferencia a partir de los nombres de fila del ejemplo de referencia que me pasaste — no hubo un número de posición final contra el cual confirmarla. Si el total no te cierra con lo que esperás, decímelo y la ajustamos.</div>
+      <table class="leeme-table">
+        <thead><tr><th>Fila</th><th>De dónde sale</th></tr></thead>
+        <tbody>
+          <tr><td>Disponible (Modo B)</td><td>Mismo número que "Total equiv. pesos" de la pestaña Modo B (④).</td></tr>
+          <tr><td>Cuentas a pagar</td><td>Mismo número que en Modo A.</td></tr>
+          <tr><td>Cobrar</td><td>De TFcobranzas — mismo número que Modo A.</td></tr>
+          <tr><td>Movidas</td><td>Solo TF Carnes: mismo número que "Efectivo a entregar" de Financiera (③) — los compromisos activos, sin contar los que marcaste como pagados. Trade Food no tiene Financiera, así que queda "—".</td></tr>
+          <tr><td>Incobrables (Archivo A) / (Archivo B)</td><td>De TFcobranzas — mismos números que Modo A.</td></tr>
+        </tbody>
+      </table>
+
+      <h2>⑦ Cobrar / Incobrables — desde TFcobranzas</h2>
+      <p><a href="https://github.com/agustin1115/TFcobranzas" target="_blank" rel="noopener">TFcobranzas</a> es
+      otro proyecto tuyo, separado de este, que no tiene base de datos propia: calcula
+      todo al vuelo en el navegador leyendo dos Google Sheets de cuentas a cobrar (uno
+      por empresa), cada uno con dos pestañas — "Archivo A" y "Archivo B" para TF
+      Carnes, "A" y "B" para Trade Food. Esta página <strong>lee esos mismos dos
+      Sheets en vivo</strong> y repite exactamente la misma lógica de TFcobranzas
+      (mismas listas de clientes excluidos y de difícil cobro, mismo criterio de
+      coincidencia parcial para TF Carnes) — no es una fuente nueva ni distinta.</p>
+      <div class="leeme-flow">Sheet Archivo A <span class="arrow">+</span> Sheet Archivo B <span class="arrow">→</span> clasificar clientes (excluidos / difícil cobro / el resto) <span class="arrow">→</span> Cobrar + Incobrables</div>
+      <ul>
+        <li><strong>Cobrar</strong> = Total a cobrar de Archivo A <strong>+</strong> Total a cobrar de Archivo B, sumados. TFcobranzas los muestra por separado en su propia pantalla, nunca sumados — la suma acá es una decisión mía, para tener un solo número de "lo que falta cobrar"; si preferís otro criterio, decime.</li>
+        <li><strong>Incobrables (Archivo A)</strong> e <strong>Incobrables (Archivo B)</strong> = el "A resolver (excluido)" de cada archivo, <strong>sin sumar</strong> — se muestran como dos filas separadas, igual que TFcobranzas lo hace en su propia pantalla. El total de Modo A/B sí resta la suma de las dos, pero la fila de arriba se ve desglosada.</li>
+        <li>Se actualiza solo cada 10 minutos (no hace falta más frecuencia para un Sheet que no cambia todo el tiempo) y muestra "—" mientras carga la primera vez después de abrir la página.</li>
+      </ul>
+      <p>Verificado corriendo el código real de TFcobranzas (<code>app.js</code>/<code>tfcarnes.js</code>) contra los Sheets en vivo y comparando los totales byte a byte contra lo que calcula esta página — coinciden exactos.</p>
+
+      <h2>⑧ Detalle (Cartera de Cheques / Cuentas a Pagar)</h2>
+      <p>Es el listado fila por fila de exactamente los mismos datos que arman "Cartera cheques" y "Cuentas a pagar" de la franja de KPIs (①) — no hay ninguna fuente adicional acá, es el detalle de esos mismos totales, con filtros para buscar por empresa, librador/proveedor o rango de fechas.</p>
+
+      <h2>Resumen rápido — quién trae cada número</h2>
+      <table class="leeme-table">
+        <thead><tr><th>Fuente</th><th>Trae</th></tr></thead>
+        <tbody>
+          <tr><td>Sheet "Reporte Tesorería" (por empresa)</td><td>Saldo bancos, Acuerdos descubierto, BAVSA, Chq emitidos</td></tr>
+          <tr><td>Sheet "Cheques físicos" (solo TFC)</td><td>Parte de Cartera cheques</td></tr>
+          <tr><td>Sheet "resumen" Modo B (compartido)</td><td>Pesos/Dólares/Cheques en caja</td></tr>
+          <tr><td>Sheets de TFcobranzas (Archivo A/B, por empresa)</td><td>Cobrar, Incobrables</td></tr>
+          <tr><td>Excel "Cuentas a pagar"</td><td>Cuentas a pagar</td></tr>
+          <tr><td>Excel "Cheques cartera"</td><td>Resto de Cartera cheques</td></tr>
+          <tr><td>Excel "Compromisos" (Financiera, solo TFC)</td><td>Efectivo a entregar, Costo financiero</td></tr>
+          <tr><td>Excel "Compromisos" (Modo B)</td><td>Buckets de Total compromisos en Modo B</td></tr>
+          <tr><td>Cotización USD (la tipeás vos)</td><td>Conversión de Dólares en caja</td></tr>
+          <tr><td>Cálculo (no tiene fuente propia)</td><td>Disponible para operar, Fondos disponibles, Saldo fin/Disponible del Cash Flow, ambas Posición (Modo A y B)</td></tr>
+        </tbody>
+      </table>
+
+    </div>
+  </div>
+</div>
+
 <script>
   // Pestañas de Financiera/Modo B/Cargar archivos por empresa — UI pura,
   // no toca nada de app.js/app-patches.js.
@@ -421,9 +589,19 @@
     evt.currentTarget.classList.add('active');
     document.getElementById('sectab-'+co+'-'+name).classList.add('active');
   }
+
+  // Modal Léeme — UI pura, no toca nada de app.js/app-patches.js.
+  function openLeeme(){
+    document.getElementById('leeme-overlay').classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+  function closeLeeme(){
+    document.getElementById('leeme-overlay').classList.remove('open');
+    document.body.style.overflow = '';
+  }
 </script>
 
 <script src="js/app.js?v=1"></script>
-<script src="js/app-patches.js?v=3"></script>
+<script src="js/app-patches.js?v=4"></script>
 </body>
 </html>
