@@ -412,8 +412,8 @@
       </table>
 
       <h2>⑤ Resumen de Posición — Modo A</h2>
-      <div class="leeme-flow">Bancos <span class="arrow">−</span> Cheques emitidos <span class="arrow">−</span> Cuentas a pagar <span class="arrow">+</span> Cheques en cartera <span class="arrow">+</span> Cobrar <span class="arrow">−</span> Incobrables <span class="arrow">=</span> <b>Posición Modo A</b></div>
-      <p>Esta fórmula está <strong>confirmada</strong> contra el ejemplo de referencia que me pasaste.</p>
+      <div class="leeme-flow">Bancos <span class="arrow">−</span> Cheques emitidos <span class="arrow">−</span> Cuentas a pagar <span class="arrow">+</span> Cheques en cartera <span class="arrow">+</span> Cobrar <span class="arrow">−</span> Movidas <span class="arrow">−</span> Incobrables <span class="arrow">=</span> <b>Posición Modo A</b></div>
+      <p>La parte de Bancos/Cheques emitidos/Cuentas a pagar/Cheques en cartera/Cobrar/Incobrables está <strong>confirmada</strong> contra el ejemplo de referencia que me pasaste. "Movidas" se movió acá desde Modo B a pedido tuyo.</p>
       <table class="leeme-table">
         <thead><tr><th>Fila</th><th>De dónde sale</th></tr></thead>
         <tbody>
@@ -422,12 +422,13 @@
           <tr><td>Cuentas a pagar</td><td>Mismo número que "Cuentas a pagar" (①).</td></tr>
           <tr><td>Cheques en cartera</td><td>Mismo número que "Cartera cheques" (①).</td></tr>
           <tr><td>Cobrar</td><td>De TFcobranzas — ver ⑦ más abajo.</td></tr>
+          <tr><td>Movidas</td><td>Solo TF Carnes: mismo número que "Efectivo a entregar" de Financiera (③) — los compromisos activos, sin contar los que marcaste como pagados. Trade Food no tiene Financiera, así que queda "—".</td></tr>
           <tr><td>Incobrables</td><td>De TFcobranzas, <strong>solo Archivo A</strong> — ver ⑦ más abajo.</td></tr>
         </tbody>
       </table>
 
       <h2>⑥ Resumen de Posición — Modo B</h2>
-      <div class="leeme-flow">Disponible (Modo B) <span class="arrow">−</span> Cuentas a pagar <span class="arrow">+</span> Cobrar <span class="arrow">−</span> Movidas <span class="arrow">−</span> Incobrables <span class="arrow">=</span> <b>Posición Modo B</b></div>
+      <div class="leeme-flow">Disponible (Modo B) <span class="arrow">−</span> Cuentas a pagar <span class="arrow">+</span> Cobrar <span class="arrow">−</span> Incobrables <span class="arrow">=</span> <b>Posición Modo B</b></div>
       <div class="leeme-warn"><strong>Ojo:</strong> a diferencia de Modo A, esta fórmula es una inferencia a partir de los nombres de fila del ejemplo de referencia que me pasaste — no hubo un número de posición final contra el cual confirmarla. Si el total no te cierra con lo que esperás, decímelo y la ajustamos.</div>
       <table class="leeme-table">
         <thead><tr><th>Fila</th><th>De dónde sale</th></tr></thead>
@@ -435,7 +436,6 @@
           <tr><td>Disponible (Modo B)</td><td>Mismo número que "Total equiv. pesos" de la pestaña Modo B (④).</td></tr>
           <tr><td>Cuentas a pagar</td><td>Mismo número que en Modo A.</td></tr>
           <tr><td>Cobrar</td><td>De TFcobranzas — mismo número que Modo A.</td></tr>
-          <tr><td>Movidas</td><td>Solo TF Carnes: mismo número que "Efectivo a entregar" de Financiera (③) — los compromisos activos, sin contar los que marcaste como pagados. Trade Food no tiene Financiera, así que queda "—".</td></tr>
           <tr><td>Incobrables</td><td>De TFcobranzas, <strong>solo Archivo B</strong> — distinto del Incobrables de Modo A, que usa Archivo A.</td></tr>
         </tbody>
       </table>
@@ -601,6 +601,6 @@
 </script>
 
 <script src="js/app.js?v=1"></script>
-<script src="js/app-patches.js?v=5"></script>
+<script src="js/app-patches.js?v=6"></script>
 </body>
 </html>

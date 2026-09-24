@@ -122,8 +122,10 @@ cheque + 2 días hábiles.
 ### Resumen de Posición — Modo A
 
 Fórmula: **Bancos − Cheques emitidos − Cuentas a pagar + Cheques en cartera
-+ Cobrar − Incobrables**. Confirmada contra el ejemplo de referencia que me
-pasaste.
++ Cobrar − Movidas − Incobrables**. La parte de Bancos/Cheques
+emitidos/Cuentas a pagar/Cheques en cartera/Cobrar/Incobrables está
+confirmada contra el ejemplo de referencia que me pasaste. "Movidas" se
+movió acá desde Modo B a pedido tuyo.
 
 | Fila | De dónde sale |
 |---|---|
@@ -132,11 +134,12 @@ pasaste.
 | **Cuentas a pagar** | Mismo número que "Cuentas a pagar" de la franja de KPIs. |
 | **Cheques en cartera** | Mismo número que "Cartera cheques" de la franja de KPIs. |
 | **Cobrar** | **TFcobranzas** (ver abajo). |
+| **Movidas** | Solo TFC: mismo número que "Efectivo a entregar" de Financiera (compromisos activos, sin contar los que marcaste como pagados). Trade Food no tiene Financiera, así que queda "—". |
 | **Incobrables** | **TFcobranzas** (ver abajo), **solo Archivo A**. |
 
 ### Resumen de Posición — Modo B
 
-Fórmula: **Disponible (Modo B) − Cuentas a pagar + Cobrar − Movidas −
+Fórmula: **Disponible (Modo B) − Cuentas a pagar + Cobrar −
 Incobrables**. ⚠️ **A diferencia de Modo A, esta fórmula es una inferencia
 mía a partir de los nombres de fila de tu imagen de referencia — no tuve un
 número concreto contra el cual confirmarla.** Si el total no te cierra,
@@ -147,7 +150,6 @@ avisame y la ajustamos.
 | **Disponible (Modo B)** | Mismo número que "Total equiv. pesos" de la pestaña Modo B. |
 | **Cuentas a pagar** | Mismo número que Modo A. |
 | **Cobrar** | **TFcobranzas** (ver abajo) — mismo número que Modo A. |
-| **Movidas** | Solo TFC: mismo número que "Efectivo a entregar" de Financiera (compromisos activos, sin contar los que marcaste como pagados). Trade Food no tiene Financiera, así que queda "—". |
 | **Incobrables** | **TFcobranzas** (ver abajo), **solo Archivo B** — distinto del Incobrables de Modo A, que usa Archivo A. |
 
 ### Cobrar / Incobrables — desde TFcobranzas
