@@ -9,7 +9,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Teko:wght@500;600;700&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/style.css?v=9">
+<link rel="stylesheet" href="css/style.css?v=10">
 </head>
 <body>
 <div class="page">
@@ -81,28 +81,39 @@
         </table></div>
       </div>
 
-      <!-- Resumen de Posición se muda acá (rs-slot-tfc/rs-slot-tf) según la
-           empresa activa — ver switchCoTab() parcheado en app-patches.js.
-           TFC es la empresa activa por defecto, así que arranca acá. -->
+      <!-- Resumen de Posición (+ el bloque de "Cerrar semana" de abajo) se
+           mudan juntos acá (rs-slot-tfc/rs-slot-tf) según la empresa activa
+           — ver switchCoTab() parcheado en app-patches.js. TFC es la
+           empresa activa por defecto, así que arranca acá. -->
       <div class="panel-rs" id="rs-slot-tfc">
-        <div class="card resumen-section" id="resumen-section">
-          <div class="card-head resumen-header">
-            <div class="card-title-group">
-              <span class="card-title">📊 Resumen de Posición</span>
-              <span class="card-title-note">TF Carnes · Trade Food</span>
+        <div id="resumen-wrap">
+          <div class="card resumen-section" id="resumen-section">
+            <div class="card-head resumen-header">
+              <div class="card-title-group">
+                <span class="card-title">📊 Resumen de Posición</span>
+                <span class="card-title-note">TF Carnes · Trade Food</span>
+              </div>
+              <div class="rs-mode-tabs">
+                <button class="rs-mtab active" id="rsmtab-a" onclick="switchResumenModo('a')">Modo A</button>
+                <button class="rs-mtab" id="rsmtab-b" onclick="switchResumenModo('b')">Modo B</button>
+              </div>
+              <button onclick="renderResumen()" class="btn-resumen-refresh">↺ Actualizar</button>
             </div>
-            <div class="rs-mode-tabs">
-              <button class="rs-mtab active" id="rsmtab-a" onclick="switchResumenModo('a')">Modo A</button>
-              <button class="rs-mtab" id="rsmtab-b" onclick="switchResumenModo('b')">Modo B</button>
+            <div class="resumen-body">
+              <table class="resumen-table" id="resumen-table">
+                <tbody>
+                  <tr><td colspan="3" style="padding:18px;text-align:center;color:var(--ink-faint);font-size:12px">Cargando resumen…</td></tr>
+                </tbody>
+              </table>
             </div>
-            <button onclick="renderResumen()" class="btn-resumen-refresh">↺ Actualizar</button>
           </div>
-          <div class="resumen-body">
-            <table class="resumen-table" id="resumen-table">
-              <tbody>
-                <tr><td colspan="3" style="padding:18px;text-align:center;color:var(--ink-faint);font-size:12px">Cargando resumen…</td></tr>
-              </tbody>
-            </table>
+
+          <!-- Guarda una foto de estos números (con fecha) en el Google Sheet
+               de cierres semanales, para poder leerla después desde otra
+               página. Ver _resumenSnapshot/cerrarSemana() en app-patches.js. -->
+          <div class="cerrar-semana-box">
+            <button class="btn-cerrar-semana" id="btn-cerrar-semana" onclick="cerrarSemana()">🔒 Cerrar semana</button>
+            <div class="cerrar-semana-status" id="cerrar-semana-status"></div>
           </div>
         </div>
       </div>
@@ -344,6 +355,10 @@
       <p>Casi todas las tarjetas de número (KPIs de arriba y de Financiera) tienen una
       flechita "↗" y son clickeables: al tocarlas se abre un detalle con los ítems
       (bancos, cheques, proveedores, clientes) que suman ese total.</p>
+      <p>Debajo del Resumen de Posición hay un botón <strong>"🔒 Cerrar semana"</strong>
+      que guarda una foto de esos números (con fecha) en un Google Sheet aparte, para
+      armar un historial semanal — ver el README del repo para el detalle de qué
+      guarda y cómo configurarlo.</p>
 
       <h2>① Franja de KPIs (arriba de cada empresa)</h2>
       <p>Estos números vienen todos de la misma planilla: el Google Sheet <strong>"Reporte Tesorería"</strong> de cada empresa (uno para TF Carnes, otro para Trade Food — no es el mismo Sheet). Tiene una fila por banco y una fila "TOTAL".</p>
@@ -625,6 +640,6 @@
 </script>
 
 <script src="js/app.js?v=1"></script>
-<script src="js/app-patches.js?v=7"></script>
+<script src="js/app-patches.js?v=8"></script>
 </body>
 </html>

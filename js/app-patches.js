@@ -308,6 +308,9 @@ setInterval(cobRefresh, 10 * 60 * 1000);
 // B (pesos + cheques + USD convertidos) en vez del saldo bancario, ajustado
 // por cuentas a pagar, cobrar/incobrables y lo movido a Financiera.
 let _resumenModo = 'a';
+// Última foto de los números del Resumen (los dos modos, las dos empresas),
+// la recalcula renderResumen() cada vez que corre — la usa cerrarSemana().
+let _resumenSnapshot = null;
 function switchResumenModo(modo){
   _resumenModo = modo;
   document.getElementById('rsmtab-a').classList.toggle('active', modo === 'a');
@@ -370,13 +373,31 @@ function renderResumen(){
   const activosTfc = (st.tfc.compromisos || []).filter(c => !_finPagados.has(c.id));
   const movidasTfc = activosTfc.reduce((s,c) => s + c.importeEfectivo, 0);
 
+  // Totales de LOS DOS modos, siempre (no solo el que está en pantalla) —
+  // así "Cerrar semana" puede guardar todo sin importar qué pestaña tenías
+  // abierta. Mismas fórmulas que abajo, un solo lugar donde calcularlas.
+  const totalATfc = (bancosTfc||0) - emitidosTfc - cpagarTfc + carteraTfc + (cobrarTfc||0) - movidasTfc - (incobrATfc||0);
+  const totalATf  = (bancosTf ||0) - emitidosTf  - cpagarTf  + carteraTf  + (cobrarTf ||0) - (incobrATf ||0);
+  const totalBTfc = (mbTotalTfc||0) - cpagarTfc + (cobrarTfc||0) - (incobrBTfc||0);
+  const totalBTf  = (mbTotalTf ||0) - cpagarTf  + (cobrarTf ||0) - (incobrBTf ||0);
+
+  // Foto de estos números para "Cerrar semana" (ver cerrarSemana() más abajo)
+  // — se recalcula cada vez que corre renderResumen(), así siempre está al
+  // día con lo último cargado.
+  _resumenSnapshot = {
+    tfc: { bancos: bancosTfc, chequesEmitidos: emitidosTfc, cuentasAPagar: cpagarTfc, chequesEnCartera: carteraTfc,
+           cobrar: cobrarTfc, movidas: movidasTfc, incobrablesA: incobrATfc, incobrablesB: incobrBTfc,
+           disponibleModoB: mbTotalTfc, posicionModoA: totalATfc, posicionModoB: totalBTfc },
+    tf:  { bancos: bancosTf, chequesEmitidos: emitidosTf, cuentasAPagar: cpagarTf, chequesEnCartera: carteraTf,
+           cobrar: cobrarTf, movidas: null, incobrablesA: incobrATf, incobrablesB: incobrBTf,
+           disponibleModoB: mbTotalTf, posicionModoA: totalATf, posicionModoB: totalBTf },
+  };
+
   let bodyHtml, footHtml;
 
   if (_resumenModo === 'a') {
     // Incobrables en Modo A = solo Archivo A de TFcobranzas (no se suma con B).
     // "Movidas (a Financiera)" se movió acá desde Modo B.
-    const totalATfc = (bancosTfc||0) - emitidosTfc - cpagarTfc + carteraTfc + (cobrarTfc||0) - movidasTfc - (incobrATfc||0);
-    const totalATf  = (bancosTf ||0) - emitidosTf  - cpagarTf  + carteraTf  + (cobrarTf ||0) - (incobrATf ||0);
     bodyHtml = `
       ${row('Bancos', bancosTfc, bancosTf)}
       ${row('Cheques emitidos', emitidosTfc ? -emitidosTfc : null, emitidosTf ? -emitidosTf : null)}
@@ -400,8 +421,6 @@ function renderResumen(){
     // NOTA: esta fórmula de Modo B es una inferencia mía a partir del ejemplo
     // que pasaste (no la confirmé contra un número de referencia como sí hice
     // con Modo A) — avisame si el total no coincide con lo que esperás.
-    const totalBTfc = (mbTotalTfc||0) - cpagarTfc + (cobrarTfc||0) - (incobrBTfc||0);
-    const totalBTf  = (mbTotalTf ||0) - cpagarTf  + (cobrarTf ||0) - (incobrBTf ||0);
     bodyHtml = `
       ${row('Disponible (Modo B)', mbTotalTfc || null, mbTotalTf || null)}
       ${row('Cuentas a pagar', cpagarTfc ? -cpagarTfc : null, cpagarTf ? -cpagarTf : null)}
@@ -438,14 +457,14 @@ renderAll = function(){
 };
 
 // ── Resumen de Posición al lado del Cash Flow de la empresa activa ─────────
-// #resumen-section es una sola instancia (un solo resumen-table, un solo
-// switchResumenModo) que se muda de contenedor según la empresa activa, en
-// vez de duplicarse — así no hay dos tablas ni ids repetidos. rs-slot-tfc/
-// rs-slot-tf son los dos posibles destinos (uno al lado de cada Cash Flow).
+// #resumen-wrap (la card de Resumen + el botón "Cerrar semana") es una sola
+// instancia que se muda de contenedor según la empresa activa, en vez de
+// duplicarse — así no hay dos tablas ni ids repetidos. rs-slot-tfc/rs-slot-tf
+// son los dos posibles destinos (uno al lado de cada Cash Flow).
 function cobPlaceResumen(co){
-  const section = document.getElementById('resumen-section');
+  const wrap = document.getElementById('resumen-wrap');
   const slot = document.getElementById(co === 'tf' ? 'rs-slot-tf' : 'rs-slot-tfc');
-  if (section && slot && section.parentElement !== slot) slot.appendChild(section);
+  if (wrap && slot && wrap.parentElement !== slot) slot.appendChild(wrap);
 }
 cobPlaceResumen(typeof _coTab !== 'undefined' ? _coTab : 'tfc');
 
@@ -606,4 +625,74 @@ function abrirKpiModal(titulo, lista, vacioMsg, col2Label){
 function cerrarKpiModal(){
   document.getElementById('kpi-overlay').classList.remove('open');
   document.body.style.overflow = '';
+}
+
+// ── Cerrar semana: guarda una foto del Resumen de Posición (los dos modos,
+// las dos empresas) en el Google Sheet de cierres semanales, para poder
+// leerla después desde otra página. ─────────────────────────────────────
+//
+// ⚠️ FALTA UN PASO MANUAL para que esto funcione: escribir en un Google
+// Sheet desde una página estática (sin backend propio) requiere un Google
+// Apps Script Web App publicado — un API key normal solo sirve para LEER
+// sheets públicos, no para escribir. No lo puedo crear ni publicar yo
+// (necesita tu cuenta de Google con permiso de edición sobre ese Sheet).
+// Instrucciones completas en README.md, sección "Cerrar semana". Hasta que
+// completes CIERRE_SEMANA_URL acá abajo, el botón avisa que falta configurar
+// en vez de fallar en silencio.
+const CIERRE_SEMANA_URL = ''; // ← pegar acá la URL del Apps Script Web App (ver README)
+
+function cerrarSemana(){
+  const btn = document.getElementById('btn-cerrar-semana');
+  const status = document.getElementById('cerrar-semana-status');
+  const setStatus = (msg, cls) => { if (status) { status.textContent = msg; status.className = 'cerrar-semana-status' + (cls ? ' ' + cls : ''); } };
+
+  if (!CIERRE_SEMANA_URL) {
+    setStatus('Falta configurar CIERRE_SEMANA_URL en app-patches.js (ver README)', 'err');
+    return;
+  }
+  if (!_resumenSnapshot) {
+    setStatus('Todavía no terminó de cargar el Resumen de Posición — probá de nuevo en un momento', 'err');
+    return;
+  }
+
+  const ahora = new Date();
+  const filas = ['tfc', 'tf'].map(co => {
+    const s = _resumenSnapshot[co];
+    return {
+      fecha: ahora.toISOString(),
+      empresa: co === 'tfc' ? 'TF Carnes' : 'Trade Food',
+      bancos: s.bancos,
+      chequesEmitidos: s.chequesEmitidos,
+      cuentasAPagar: s.cuentasAPagar,
+      chequesEnCartera: s.chequesEnCartera,
+      cobrar: s.cobrar,
+      movidas: s.movidas,
+      incobrablesArchivoA: s.incobrablesA,
+      incobrablesArchivoB: s.incobrablesB,
+      disponibleModoB: s.disponibleModoB,
+      posicionModoA: s.posicionModoA,
+      posicionModoB: s.posicionModoB,
+    };
+  });
+
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ Guardando…'; }
+  setStatus('', '');
+
+  // mode:'no-cors' es a propósito: los Web Apps de Apps Script casi nunca
+  // devuelven los headers CORS que el navegador pide para poder LEER la
+  // respuesta desde fetch() — pero el POST en sí SÍ le llega y se ejecuta
+  // igual. Con no-cors no podemos leer si salió bien, así que el mensaje de
+  // éxito es optimista (el catch de abajo solo agarra errores de red/URL
+  // mal puesta, no errores del lado del Apps Script).
+  fetch(CIERRE_SEMANA_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ filas }) })
+    .then(() => {
+      setStatus('✓ Semana cerrada · ' + ahora.toLocaleDateString('es-AR') + ' ' + ahora.toLocaleTimeString('es-AR', {hour:'2-digit', minute:'2-digit'}), 'ok');
+    })
+    .catch(err => {
+      console.error('[Cerrar semana]', err);
+      setStatus('✗ No se pudo conectar con el Sheet: ' + err.message, 'err');
+    })
+    .finally(() => {
+      if (btn) { btn.disabled = false; btn.textContent = '🔒 Cerrar semana'; }
+    });
 }

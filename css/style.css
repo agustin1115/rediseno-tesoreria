@@ -245,6 +245,15 @@ tr:not(.weekend):not(.feriado):hover td{background:var(--surface-2)}
 
 /* ═══ RESUMEN DE POSICIÓN ═════════════════════════════════════════════ */
 .resumen-section{margin-bottom:16px}
+
+/* ═══ CERRAR SEMANA (debajo del Resumen de Posición) ═════════════════ */
+.cerrar-semana-box{display:flex;flex-direction:column;align-items:center;gap:8px;padding:18px 14px}
+.btn-cerrar-semana{display:inline-flex;align-items:center;gap:8px;padding:11px 22px;border-radius:999px;border:1px solid var(--border);background:var(--surface);color:var(--ink-soft);font:inherit;font-size:12.5px;font-weight:600;cursor:pointer;box-shadow:var(--shadow)}
+.btn-cerrar-semana:hover{color:var(--ink);border-color:var(--tfc-primary)}
+.btn-cerrar-semana:disabled{opacity:.6;cursor:default}
+.cerrar-semana-status{font-size:11px;color:var(--ink-faint);text-align:center;min-height:14px}
+.cerrar-semana-status.ok{color:var(--good)}
+.cerrar-semana-status.err{color:var(--bad)}
 .resumen-header{background:var(--topbar);color:var(--topbar-ink);border-bottom:none}
 .resumen-header .card-title{color:var(--topbar-ink)}
 .resumen-header .card-title-note{color:var(--topbar-ink-soft)}
