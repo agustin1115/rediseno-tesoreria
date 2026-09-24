@@ -131,7 +131,7 @@ pasaste.
 | **Cuentas a pagar** | Mismo número que "Cuentas a pagar" de la franja de KPIs. |
 | **Cheques en cartera** | Mismo número que "Cartera cheques" de la franja de KPIs. |
 | **Cobrar** | **TFcobranzas** (ver abajo). |
-| **Incobrables** | **TFcobranzas** (ver abajo). |
+| **Incobrables** | **TFcobranzas** (ver abajo), **solo Archivo A**. |
 
 ### Resumen de Posición — Modo B
 
@@ -147,7 +147,7 @@ avisame y la ajustamos.
 | **Cuentas a pagar** | Mismo número que Modo A. |
 | **Cobrar** | **TFcobranzas** (ver abajo) — mismo número que Modo A. |
 | **Movidas** | Solo TFC: mismo número que "Efectivo a entregar" de Financiera (compromisos activos, sin contar los que marcaste como pagados). Trade Food no tiene Financiera, así que queda "—". |
-| **Incobrables** | **TFcobranzas** (ver abajo) — mismo número que Modo A. |
+| **Incobrables** | **TFcobranzas** (ver abajo), **solo Archivo B** — distinto del Incobrables de Modo A, que usa Archivo A. |
 
 ### Cobrar / Incobrables — desde TFcobranzas
 
@@ -159,8 +159,8 @@ dos Google Sheets (uno por empresa, cada uno con pestañas "Archivo A" /
 coincidencia parcial para TF Carnes) en `js/app-patches.js`, leyendo los
 mismos dos Sheets en vivo — no hay una fuente nueva ni distinta.
 
-- **Cobrar** = Total a cobrar de Archivo A + Total a cobrar de Archivo B (TFcobranzas muestra estos dos números por separado, nunca sumados — la suma es una decisión mía; si preferís otro criterio, decime).
-- **Incobrables** = Difícil cobro/A resolver de Archivo A + de Archivo B, misma lógica de suma.
+- **Cobrar** (mismo número en Modo A y Modo B) = Total a cobrar de Archivo A + Total a cobrar de Archivo B (TFcobranzas muestra estos dos números por separado, nunca sumados — la suma es una decisión mía; si preferís otro criterio, decime).
+- **Incobrables NO se suma**: el de **Modo A** es el "A resolver (excluido)" de **Archivo A** únicamente, y el de **Modo B** es el de **Archivo B** únicamente.
 - Se refresca solo cada 10 minutos (no hace falta más frecuencia para un Sheet que no cambia todo el tiempo) y muestra "—" mientras carga la primera vez.
 - Verificado corriendo el `app.js`/`tfcarnes.js` **real** de TFcobranzas contra los Sheets en vivo y comparando los totales byte a byte contra el puerto de este repo — coinciden exactos.
 

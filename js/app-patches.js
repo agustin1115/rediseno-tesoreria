@@ -360,8 +360,6 @@ function renderResumen(){
   const incobrBTfc = cobTfc ? cobTfc.dificilCobroB : null;
   const incobrATf  = cobTf  ? cobTf.dificilCobroA  : null;
   const incobrBTf  = cobTf  ? cobTf.dificilCobroB  : null;
-  const incobrTfc = (incobrATfc != null || incobrBTfc != null) ? (incobrATfc||0) + (incobrBTfc||0) : null;
-  const incobrTf  = (incobrATf  != null || incobrBTf  != null) ? (incobrATf ||0) + (incobrBTf ||0) : null;
 
   // Movidas (Modo B): lo que ya se giró a Financiera, = "Efectivo a entregar"
   // de Compromisos de Efectivo (mismo cálculo que arma finkpi-efec en
@@ -375,45 +373,45 @@ function renderResumen(){
   let bodyHtml, footHtml;
 
   if (_resumenModo === 'a') {
-    const totalATfc = (bancosTfc||0) - emitidosTfc - cpagarTfc + carteraTfc + (cobrarTfc||0) - (incobrTfc||0);
-    const totalATf  = (bancosTf ||0) - emitidosTf  - cpagarTf  + carteraTf  + (cobrarTf ||0) - (incobrTf ||0);
+    // Incobrables en Modo A = solo Archivo A de TFcobranzas (no se suma con B).
+    const totalATfc = (bancosTfc||0) - emitidosTfc - cpagarTfc + carteraTfc + (cobrarTfc||0) - (incobrATfc||0);
+    const totalATf  = (bancosTf ||0) - emitidosTf  - cpagarTf  + carteraTf  + (cobrarTf ||0) - (incobrATf ||0);
     bodyHtml = `
       ${row('Bancos', bancosTfc, bancosTf)}
       ${row('Cheques emitidos', emitidosTfc ? -emitidosTfc : null, emitidosTf ? -emitidosTf : null)}
       ${row('Cuentas a pagar', cpagarTfc ? -cpagarTfc : null, cpagarTf ? -cpagarTf : null)}
       ${row('Cheques en cartera', carteraTfc || null, carteraTf || null)}
       ${row('Cobrar', cobrarTfc, cobrarTf)}
-      ${row('Incobrables (Archivo A)', incobrATfc ? -incobrATfc : (incobrATfc===0?0:null), incobrATf ? -incobrATf : (incobrATf===0?0:null))}
-      ${row('Incobrables (Archivo B)', incobrBTfc ? -incobrBTfc : (incobrBTfc===0?0:null), incobrBTf ? -incobrBTf : (incobrBTf===0?0:null))}
+      ${row('Incobrables', incobrATfc ? -incobrATfc : (incobrATfc===0?0:null), incobrATf ? -incobrATf : (incobrATf===0?0:null))}
       <tr class="rs-total-row">
         <td class="rs-label rs-total">Posición Modo A</td>
         <td class="rs-val rs-total tfc-col ${cls(totalATfc)}">${fmt(totalATfc)}</td>
         <td class="rs-val rs-total tf-col ${cls(totalATf)}">${fmt(totalATf)}</td>
       </tr>`;
-    footHtml = `Modo A = Bancos − Cheques emitidos − Cuentas a pagar + Cheques en cartera + Cobrar − Incobrables (A+B).
-      Cobrar/Incobrables salen de TFcobranzas: Cobrar suma Archivo A + Archivo B, Incobrables se muestra por archivo (igual que TFcobranzas lo hace).`;
+    footHtml = `Modo A = Bancos − Cheques emitidos − Cuentas a pagar + Cheques en cartera + Cobrar − Incobrables.
+      Cobrar suma Archivo A + Archivo B de TFcobranzas; Incobrables acá es solo Archivo A (el de Archivo B se usa en Modo B).`;
   } else {
     // Modo B: la "posición" parte de lo disponible en Modo B (caja), no del
     // saldo bancario — el resto de los ajustes es el mismo criterio que Modo A.
+    // Incobrables en Modo B = solo Archivo B de TFcobranzas.
     // NOTA: esta fórmula de Modo B es una inferencia mía a partir del ejemplo
     // que pasaste (no la confirmé contra un número de referencia como sí hice
     // con Modo A) — avisame si el total no coincide con lo que esperás.
-    const totalBTfc = (mbTotalTfc||0) - cpagarTfc + (cobrarTfc||0) - movidasTfc - (incobrTfc||0);
-    const totalBTf  = (mbTotalTf ||0) - cpagarTf  + (cobrarTf ||0) - (incobrTf ||0);
+    const totalBTfc = (mbTotalTfc||0) - cpagarTfc + (cobrarTfc||0) - movidasTfc - (incobrBTfc||0);
+    const totalBTf  = (mbTotalTf ||0) - cpagarTf  + (cobrarTf ||0) - (incobrBTf ||0);
     bodyHtml = `
       ${row('Disponible (Modo B)', mbTotalTfc || null, mbTotalTf || null)}
       ${row('Cuentas a pagar', cpagarTfc ? -cpagarTfc : null, cpagarTf ? -cpagarTf : null)}
       ${row('Cobrar', cobrarTfc, cobrarTf)}
       ${row('Movidas (a Financiera)', movidasTfc ? -movidasTfc : null, null)}
-      ${row('Incobrables (Archivo A)', incobrATfc ? -incobrATfc : (incobrATfc===0?0:null), incobrATf ? -incobrATf : (incobrATf===0?0:null))}
-      ${row('Incobrables (Archivo B)', incobrBTfc ? -incobrBTfc : (incobrBTfc===0?0:null), incobrBTf ? -incobrBTf : (incobrBTf===0?0:null))}
+      ${row('Incobrables', incobrBTfc ? -incobrBTfc : (incobrBTfc===0?0:null), incobrBTf ? -incobrBTf : (incobrBTf===0?0:null))}
       <tr class="rs-total-row">
         <td class="rs-label rs-total">Posición Modo B</td>
         <td class="rs-val rs-total tfc-col ${cls(totalBTfc)}">${fmt(totalBTfc)}</td>
         <td class="rs-val rs-total tf-col ${cls(totalBTf)}">${fmt(totalBTf)}</td>
       </tr>`;
-    footHtml = `Modo B = Disponible (Modo B) − Cuentas a pagar + Cobrar − Movidas (a Financiera) − Incobrables (A+B).
-      "Movidas" = Efectivo a entregar de Compromisos de Efectivo (solo TF Carnes). Fórmula de Modo B sin confirmar contra un número de referencia — revisala.`;
+    footHtml = `Modo B = Disponible (Modo B) − Cuentas a pagar + Cobrar − Movidas (a Financiera) − Incobrables.
+      "Movidas" = Efectivo a entregar de Compromisos de Efectivo (solo TF Carnes). Incobrables acá es solo Archivo B de TFcobranzas (el de Archivo A se usa en Modo A). Fórmula de Modo B sin confirmar contra un número de referencia — revisala.`;
   }
 
   tableEl.innerHTML = `

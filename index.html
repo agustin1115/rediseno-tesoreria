@@ -9,7 +9,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Teko:wght@500;600;700&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/style.css?v=4">
+<link rel="stylesheet" href="css/style.css?v=5">
 </head>
 <body>
 <div class="page">
@@ -510,7 +510,7 @@
       </table>
 
       <h2>⑤ Resumen de Posición — Modo A</h2>
-      <div class="leeme-flow">Bancos <span class="arrow">−</span> Cheques emitidos <span class="arrow">−</span> Cuentas a pagar <span class="arrow">+</span> Cheques en cartera <span class="arrow">+</span> Cobrar <span class="arrow">−</span> Incobrables (A) <span class="arrow">−</span> Incobrables (B) <span class="arrow">=</span> <b>Posición Modo A</b></div>
+      <div class="leeme-flow">Bancos <span class="arrow">−</span> Cheques emitidos <span class="arrow">−</span> Cuentas a pagar <span class="arrow">+</span> Cheques en cartera <span class="arrow">+</span> Cobrar <span class="arrow">−</span> Incobrables <span class="arrow">=</span> <b>Posición Modo A</b></div>
       <p>Esta fórmula está <strong>confirmada</strong> contra el ejemplo de referencia que me pasaste.</p>
       <table class="leeme-table">
         <thead><tr><th>Fila</th><th>De dónde sale</th></tr></thead>
@@ -520,12 +520,12 @@
           <tr><td>Cuentas a pagar</td><td>Mismo número que "Cuentas a pagar" (①).</td></tr>
           <tr><td>Cheques en cartera</td><td>Mismo número que "Cartera cheques" (①).</td></tr>
           <tr><td>Cobrar</td><td>De TFcobranzas — ver ⑦ más abajo.</td></tr>
-          <tr><td>Incobrables (Archivo A) / (Archivo B)</td><td>De TFcobranzas — ver ⑦ más abajo. Se muestran <strong>separados</strong>, no sumados (ver nota en ⑦).</td></tr>
+          <tr><td>Incobrables</td><td>De TFcobranzas, <strong>solo Archivo A</strong> — ver ⑦ más abajo.</td></tr>
         </tbody>
       </table>
 
       <h2>⑥ Resumen de Posición — Modo B</h2>
-      <div class="leeme-flow">Disponible (Modo B) <span class="arrow">−</span> Cuentas a pagar <span class="arrow">+</span> Cobrar <span class="arrow">−</span> Movidas <span class="arrow">−</span> Incobrables (A) <span class="arrow">−</span> Incobrables (B) <span class="arrow">=</span> <b>Posición Modo B</b></div>
+      <div class="leeme-flow">Disponible (Modo B) <span class="arrow">−</span> Cuentas a pagar <span class="arrow">+</span> Cobrar <span class="arrow">−</span> Movidas <span class="arrow">−</span> Incobrables <span class="arrow">=</span> <b>Posición Modo B</b></div>
       <div class="leeme-warn"><strong>Ojo:</strong> a diferencia de Modo A, esta fórmula es una inferencia a partir de los nombres de fila del ejemplo de referencia que me pasaste — no hubo un número de posición final contra el cual confirmarla. Si el total no te cierra con lo que esperás, decímelo y la ajustamos.</div>
       <table class="leeme-table">
         <thead><tr><th>Fila</th><th>De dónde sale</th></tr></thead>
@@ -534,7 +534,7 @@
           <tr><td>Cuentas a pagar</td><td>Mismo número que en Modo A.</td></tr>
           <tr><td>Cobrar</td><td>De TFcobranzas — mismo número que Modo A.</td></tr>
           <tr><td>Movidas</td><td>Solo TF Carnes: mismo número que "Efectivo a entregar" de Financiera (③) — los compromisos activos, sin contar los que marcaste como pagados. Trade Food no tiene Financiera, así que queda "—".</td></tr>
-          <tr><td>Incobrables (Archivo A) / (Archivo B)</td><td>De TFcobranzas — mismos números que Modo A.</td></tr>
+          <tr><td>Incobrables</td><td>De TFcobranzas, <strong>solo Archivo B</strong> — distinto del Incobrables de Modo A, que usa Archivo A.</td></tr>
         </tbody>
       </table>
 
@@ -549,8 +549,8 @@
       coincidencia parcial para TF Carnes) — no es una fuente nueva ni distinta.</p>
       <div class="leeme-flow">Sheet Archivo A <span class="arrow">+</span> Sheet Archivo B <span class="arrow">→</span> clasificar clientes (excluidos / difícil cobro / el resto) <span class="arrow">→</span> Cobrar + Incobrables</div>
       <ul>
-        <li><strong>Cobrar</strong> = Total a cobrar de Archivo A <strong>+</strong> Total a cobrar de Archivo B, sumados. TFcobranzas los muestra por separado en su propia pantalla, nunca sumados — la suma acá es una decisión mía, para tener un solo número de "lo que falta cobrar"; si preferís otro criterio, decime.</li>
-        <li><strong>Incobrables (Archivo A)</strong> e <strong>Incobrables (Archivo B)</strong> = el "A resolver (excluido)" de cada archivo, <strong>sin sumar</strong> — se muestran como dos filas separadas, igual que TFcobranzas lo hace en su propia pantalla. El total de Modo A/B sí resta la suma de las dos, pero la fila de arriba se ve desglosada.</li>
+        <li><strong>Cobrar</strong> (mismo número en Modo A y Modo B) = Total a cobrar de Archivo A <strong>+</strong> Total a cobrar de Archivo B, sumados. TFcobranzas los muestra por separado en su propia pantalla, nunca sumados — la suma acá es una decisión mía, para tener un solo número de "lo que falta cobrar"; si preferís otro criterio, decime.</li>
+        <li><strong>Incobrables NO se suma</strong>: el de <strong>Modo A</strong> es el "A resolver (excluido)" de <strong>Archivo A</strong> únicamente, y el de <strong>Modo B</strong> es el de <strong>Archivo B</strong> únicamente — son dos números distintos a propósito, cada uno en el modo que le corresponde.</li>
         <li>Se actualiza solo cada 10 minutos (no hace falta más frecuencia para un Sheet que no cambia todo el tiempo) y muestra "—" mientras carga la primera vez después de abrir la página.</li>
       </ul>
       <p>Verificado corriendo el código real de TFcobranzas (<code>app.js</code>/<code>tfcarnes.js</code>) contra los Sheets en vivo y comparando los totales byte a byte contra lo que calcula esta página — coinciden exactos.</p>
@@ -602,6 +602,6 @@
 </script>
 
 <script src="js/app.js?v=1"></script>
-<script src="js/app-patches.js?v=4"></script>
+<script src="js/app-patches.js?v=5"></script>
 </body>
 </html>
