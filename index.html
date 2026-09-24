@@ -9,7 +9,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Teko:wght@500;600;700&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/style.css?v=5">
+<link rel="stylesheet" href="css/style.css?v=6">
 </head>
 <body>
 <div class="page">
@@ -107,99 +107,90 @@
       </div>
     </div>
 
-    <!-- ── Panel con pestañas: Financiera / Modo B / Cargar archivos ── -->
-    <div class="card tabs-card">
-      <div class="tabbar">
-        <button class="tab active" onclick="switchSecTab('tfc','fin',event)">💵 Financiera</button>
-        <button class="tab" onclick="switchSecTab('tfc','mb',event)">⬛ Modo B</button>
-        <button class="tab" onclick="switchSecTab('tfc','up',event)">⚙ Cargar archivos</button>
+    <!-- ── Financiera / Modo B / Cargar archivos: cards separadas ── -->
+    <div class="fin-section section-card" id="fin-section-tfc">
+      <div class="fin-header">
+        <span class="fin-title">💵 Compromisos de Efectivo &nbsp;·&nbsp; Financiera</span>
+        <div style="display:flex;align-items:center;gap:10px">
+          <span class="fin-upload-st" id="fin-upload-st-tfc">Sin datos — subí el Excel de compromisos</span>
+          <label class="btn-fin-upload">
+            <input type="file" id="fi-fin-tfc" accept=".xls,.xlsx" style="display:none" onchange="onCompromisosUpload(event)">
+            📄 Subir compromisos
+          </label>
+        </div>
       </div>
+      <div class="fin-kpi-row">
+        <div class="fin-kpi"><div class="fin-kpi-label">Compromisos</div><div class="fin-kpi-value" id="finkpi-n">—</div></div>
+        <div class="fin-kpi"><div class="fin-kpi-label">Efectivo a entregar</div><div class="fin-kpi-value neg" id="finkpi-efec">—</div></div>
+        <div class="fin-kpi warn"><div class="fin-kpi-label">Costo financiero (3%)</div><div class="fin-kpi-value" id="finkpi-costo">—</div></div>
+        <div class="fin-kpi warn"><div class="fin-kpi-label">Efectivo + costo (3%)</div><div class="fin-kpi-value" id="finkpi-total-costo">—</div></div>
+      </div>
+      <div style="border-top:1px solid var(--border-soft)">
+        <div class="sub-strip">
+          <span class="sub-strip-title">📊 Compromisos de Entrega</span>
+          <span class="sub-strip-note">Fecha de pago y monto a entregar por cliente</span>
+        </div>
+        <div class="fin-table-wrap" style="max-height:280px">
+          <table class="fin-table">
+            <thead><tr>
+              <th>Cliente</th>
+              <th>Vto. cheque</th>
+              <th>Fecha entrega efectivo</th>
+              <th class="r">Importe a entregar</th>
+              <th>Estado</th>
+            </tr></thead>
+            <tbody id="fin-tbody-cfo"><tr><td colspan="5" class="fin-empty">Sin datos</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
 
-      <div class="tabpanel active" id="sectab-tfc-fin">
-        <div class="fin-section" id="fin-section-tfc">
-          <div class="fin-header">
-            <span class="fin-title">💵 Compromisos de Efectivo &nbsp;·&nbsp; Financiera</span>
-            <div style="display:flex;align-items:center;gap:10px">
-              <span class="fin-upload-st" id="fin-upload-st-tfc">Sin datos — subí el Excel de compromisos</span>
-              <label class="btn-fin-upload">
-                <input type="file" id="fi-fin-tfc" accept=".xls,.xlsx" style="display:none" onchange="onCompromisosUpload(event)">
-                📄 Subir compromisos
-              </label>
-            </div>
-          </div>
-          <div class="fin-kpi-row">
-            <div class="fin-kpi"><div class="fin-kpi-label">Compromisos</div><div class="fin-kpi-value" id="finkpi-n">—</div></div>
-            <div class="fin-kpi"><div class="fin-kpi-label">Efectivo a entregar</div><div class="fin-kpi-value neg" id="finkpi-efec">—</div></div>
-            <div class="fin-kpi warn"><div class="fin-kpi-label">Costo financiero (3%)</div><div class="fin-kpi-value" id="finkpi-costo">—</div></div>
-            <div class="fin-kpi warn"><div class="fin-kpi-label">Efectivo + costo (3%)</div><div class="fin-kpi-value" id="finkpi-total-costo">—</div></div>
-          </div>
-          <div style="border-top:1px solid var(--border-soft)">
-            <div class="sub-strip">
-              <span class="sub-strip-title">📊 Compromisos de Entrega</span>
-              <span class="sub-strip-note">Fecha de pago y monto a entregar por cliente</span>
-            </div>
-            <div class="fin-table-wrap" style="max-height:280px">
-              <table class="fin-table">
-                <thead><tr>
-                  <th>Cliente</th>
-                  <th>Vto. cheque</th>
-                  <th>Fecha entrega efectivo</th>
-                  <th class="r">Importe a entregar</th>
-                  <th>Estado</th>
-                </tr></thead>
-                <tbody id="fin-tbody-cfo"><tr><td colspan="5" class="fin-empty">Sin datos</td></tr></tbody>
-              </table>
-            </div>
+    <div class="mb-section section-card" id="mb-section-tfc">
+      <div class="mb-header">
+        <span class="mb-title">⬛ Modo B</span>
+        <div style="display:flex;align-items:center;gap:10px">
+          <span class="mb-upload-st" id="mb-upload-st-tfc">Sin compromisos cargados</span>
+          <label class="btn-mb-upload">
+            <input type="file" id="fi-mb-tfc" accept=".xls,.xlsx" style="display:none" onchange="onModoBUpload(event,'tfc')">
+            📄 Subir compromisos
+          </label>
+          <div class="modob-cotiz">
+            <span>USD $1 =</span>
+            <input type="number" id="mb-cotiz-tfc" placeholder="cotiz." min="0" step="1" oninput="setModoBCotizacion('tfc',this.value)">
+            <span>ARS</span>
           </div>
         </div>
       </div>
-
-      <div class="tabpanel" id="sectab-tfc-mb">
-        <div class="mb-section" id="mb-section-tfc">
-          <div class="mb-header">
-            <span class="mb-title">⬛ Modo B</span>
-            <div style="display:flex;align-items:center;gap:10px">
-              <span class="mb-upload-st" id="mb-upload-st-tfc">Sin compromisos cargados</span>
-              <label class="btn-mb-upload">
-                <input type="file" id="fi-mb-tfc" accept=".xls,.xlsx" style="display:none" onchange="onModoBUpload(event,'tfc')">
-                📄 Subir compromisos
-              </label>
-              <div class="modob-cotiz">
-                <span>USD $1 =</span>
-                <input type="number" id="mb-cotiz-tfc" placeholder="cotiz." min="0" step="1" oninput="setModoBCotizacion('tfc',this.value)">
-                <span>ARS</span>
-              </div>
-            </div>
-          </div>
-          <div class="mb-kpi-row">
-            <div class="mb-kpi"><div class="mb-kpi-label">Pesos en caja</div><div class="mb-kpi-value pos" id="mb-kpi-tfc-pesos">—</div></div>
-            <div class="mb-kpi"><div class="mb-kpi-label">Dólares en caja</div><div class="mb-kpi-value pos" id="mb-kpi-tfc-dolares">—</div></div>
-            <div class="mb-kpi"><div class="mb-kpi-label">Cheques Modo B</div><div class="mb-kpi-value pos" id="mb-kpi-tfc-cheques">—</div></div>
-            <div class="mb-kpi"><div class="mb-kpi-label">Total equiv. pesos</div><div class="mb-kpi-value pos" id="mb-kpi-tfc-total">—</div><div class="mb-kpi-sub" id="mb-kpi-tfc-total-sub"></div></div>
-          </div>
-          <div class="mb-kpi-row" style="border-top:1px solid rgba(255,255,255,.08)">
-            <div class="mb-kpi"><div class="mb-kpi-label">⚠ Vencido</div><div class="mb-kpi-value" id="mb-kpi-tfc-vencido">—</div></div>
-            <div class="mb-kpi"><div class="mb-kpi-label">Próx. 7 días</div><div class="mb-kpi-value" id="mb-kpi-tfc-d7">—</div></div>
-            <div class="mb-kpi"><div class="mb-kpi-label">Próx. 15 días</div><div class="mb-kpi-value" id="mb-kpi-tfc-d15">—</div></div>
-            <div class="mb-kpi"><div class="mb-kpi-label">Más de 15 días</div><div class="mb-kpi-value" id="mb-kpi-tfc-d15plus">—</div></div>
-            <div class="mb-kpi total"><div class="mb-kpi-label">Total compromisos</div><div class="mb-kpi-value neg" id="mb-kpi-tfc-total-venc">—</div></div>
-          </div>
-          <div class="sub-strip">
-            <span class="sub-strip-title">📋 Compromisos de Pago</span>
-            <span class="sub-strip-note">Proveedor · Fecha · Importe</span>
-          </div>
-          <div class="mb-table-wrap">
-            <table class="mb-table">
-              <thead><tr>
-                <th>Proveedor / Destino</th><th>Fecha pago</th><th class="r">Días</th><th class="r">Importe</th>
-              </tr></thead>
-              <tbody id="mb-tbody-tfc"><tr><td colspan="4" class="mb-empty">Sin datos</td></tr></tbody>
-            </table>
-          </div>
-        </div>
+      <div class="mb-kpi-row">
+        <div class="mb-kpi"><div class="mb-kpi-label">Pesos en caja</div><div class="mb-kpi-value pos" id="mb-kpi-tfc-pesos">—</div></div>
+        <div class="mb-kpi"><div class="mb-kpi-label">Dólares en caja</div><div class="mb-kpi-value pos" id="mb-kpi-tfc-dolares">—</div></div>
+        <div class="mb-kpi"><div class="mb-kpi-label">Cheques Modo B</div><div class="mb-kpi-value pos" id="mb-kpi-tfc-cheques">—</div></div>
+        <div class="mb-kpi"><div class="mb-kpi-label">Total equiv. pesos</div><div class="mb-kpi-value pos" id="mb-kpi-tfc-total">—</div><div class="mb-kpi-sub" id="mb-kpi-tfc-total-sub"></div></div>
       </div>
+      <div class="mb-kpi-row" style="border-top:1px solid rgba(255,255,255,.08)">
+        <div class="mb-kpi"><div class="mb-kpi-label">⚠ Vencido</div><div class="mb-kpi-value" id="mb-kpi-tfc-vencido">—</div></div>
+        <div class="mb-kpi"><div class="mb-kpi-label">Próx. 7 días</div><div class="mb-kpi-value" id="mb-kpi-tfc-d7">—</div></div>
+        <div class="mb-kpi"><div class="mb-kpi-label">Próx. 15 días</div><div class="mb-kpi-value" id="mb-kpi-tfc-d15">—</div></div>
+        <div class="mb-kpi"><div class="mb-kpi-label">Más de 15 días</div><div class="mb-kpi-value" id="mb-kpi-tfc-d15plus">—</div></div>
+        <div class="mb-kpi total"><div class="mb-kpi-label">Total compromisos</div><div class="mb-kpi-value neg" id="mb-kpi-tfc-total-venc">—</div></div>
+      </div>
+      <div class="sub-strip">
+        <span class="sub-strip-title">📋 Compromisos de Pago</span>
+        <span class="sub-strip-note">Proveedor · Fecha · Importe</span>
+      </div>
+      <div class="mb-table-wrap">
+        <table class="mb-table">
+          <thead><tr>
+            <th>Proveedor / Destino</th><th>Fecha pago</th><th class="r">Días</th><th class="r">Importe</th>
+          </tr></thead>
+          <tbody id="mb-tbody-tfc"><tr><td colspan="4" class="mb-empty">Sin datos</td></tr></tbody>
+        </table>
+      </div>
+    </div>
 
-      <div class="tabpanel" id="sectab-tfc-up">
+    <div class="card section-card">
+      <div class="card-head"><span class="card-title">⚙ Cargar archivos</span></div>
+      <div class="card-pad">
         <div class="upload-grid">
           <div class="upload-row">
             <div class="upload-info"><div class="upload-name">Ingresos esperados</div><div class="upload-st" id="ust-cob-tfc">Sin ingresos ingresados</div></div>
@@ -275,58 +266,52 @@
       <div class="panel-rs" id="rs-slot-tf"></div>
     </div>
 
-    <div class="card tabs-card">
-      <div class="tabbar">
-        <button class="tab active" onclick="switchSecTab('tf','mb',event)">⬛ Modo B</button>
-        <button class="tab" onclick="switchSecTab('tf','up',event)">⚙ Cargar archivos</button>
-      </div>
-
-      <div class="tabpanel active" id="sectab-tf-mb">
-        <div class="mb-section" id="mb-section-tf">
-          <div class="mb-header">
-            <span class="mb-title">⬛ Modo B</span>
-            <div style="display:flex;align-items:center;gap:10px">
-              <span class="mb-upload-st" id="mb-upload-st-tf">Sin compromisos cargados</span>
-              <label class="btn-mb-upload">
-                <input type="file" id="fi-mb-tf" accept=".xls,.xlsx" style="display:none" onchange="onModoBUpload(event,'tf')">
-                📄 Subir compromisos
-              </label>
-              <div class="modob-cotiz">
-                <span>USD $1 =</span>
-                <input type="number" id="mb-cotiz-tf" placeholder="cotiz." min="0" step="1" oninput="setModoBCotizacion('tf',this.value)">
-                <span>ARS</span>
-              </div>
-            </div>
-          </div>
-          <div class="mb-kpi-row">
-            <div class="mb-kpi"><div class="mb-kpi-label">Pesos en caja</div><div class="mb-kpi-value pos" id="mb-kpi-tf-pesos">—</div></div>
-            <div class="mb-kpi"><div class="mb-kpi-label">Dólares en caja</div><div class="mb-kpi-value pos" id="mb-kpi-tf-dolares">—</div></div>
-            <div class="mb-kpi"><div class="mb-kpi-label">Cheques Modo B</div><div class="mb-kpi-value pos" id="mb-kpi-tf-cheques">—</div></div>
-            <div class="mb-kpi"><div class="mb-kpi-label">Total equiv. pesos</div><div class="mb-kpi-value pos" id="mb-kpi-tf-total">—</div><div class="mb-kpi-sub" id="mb-kpi-tf-total-sub"></div></div>
-          </div>
-          <div class="mb-kpi-row" style="border-top:1px solid rgba(255,255,255,.08)">
-            <div class="mb-kpi"><div class="mb-kpi-label">⚠ Vencido</div><div class="mb-kpi-value" id="mb-kpi-tf-vencido">—</div></div>
-            <div class="mb-kpi"><div class="mb-kpi-label">Próx. 7 días</div><div class="mb-kpi-value" id="mb-kpi-tf-d7">—</div></div>
-            <div class="mb-kpi"><div class="mb-kpi-label">Próx. 15 días</div><div class="mb-kpi-value" id="mb-kpi-tf-d15">—</div></div>
-            <div class="mb-kpi"><div class="mb-kpi-label">Más de 15 días</div><div class="mb-kpi-value" id="mb-kpi-tf-d15plus">—</div></div>
-            <div class="mb-kpi total"><div class="mb-kpi-label">Total compromisos</div><div class="mb-kpi-value neg" id="mb-kpi-tf-total-venc">—</div></div>
-          </div>
-          <div class="sub-strip">
-            <span class="sub-strip-title">📋 Compromisos de Pago</span>
-            <span class="sub-strip-note">Proveedor · Fecha · Importe</span>
-          </div>
-          <div class="mb-table-wrap">
-            <table class="mb-table">
-              <thead><tr>
-                <th>Proveedor / Destino</th><th>Fecha pago</th><th class="r">Días</th><th class="r">Importe</th>
-              </tr></thead>
-              <tbody id="mb-tbody-tf"><tr><td colspan="4" class="mb-empty">Sin datos</td></tr></tbody>
-            </table>
+    <div class="mb-section section-card" id="mb-section-tf">
+      <div class="mb-header">
+        <span class="mb-title">⬛ Modo B</span>
+        <div style="display:flex;align-items:center;gap:10px">
+          <span class="mb-upload-st" id="mb-upload-st-tf">Sin compromisos cargados</span>
+          <label class="btn-mb-upload">
+            <input type="file" id="fi-mb-tf" accept=".xls,.xlsx" style="display:none" onchange="onModoBUpload(event,'tf')">
+            📄 Subir compromisos
+          </label>
+          <div class="modob-cotiz">
+            <span>USD $1 =</span>
+            <input type="number" id="mb-cotiz-tf" placeholder="cotiz." min="0" step="1" oninput="setModoBCotizacion('tf',this.value)">
+            <span>ARS</span>
           </div>
         </div>
       </div>
+      <div class="mb-kpi-row">
+        <div class="mb-kpi"><div class="mb-kpi-label">Pesos en caja</div><div class="mb-kpi-value pos" id="mb-kpi-tf-pesos">—</div></div>
+        <div class="mb-kpi"><div class="mb-kpi-label">Dólares en caja</div><div class="mb-kpi-value pos" id="mb-kpi-tf-dolares">—</div></div>
+        <div class="mb-kpi"><div class="mb-kpi-label">Cheques Modo B</div><div class="mb-kpi-value pos" id="mb-kpi-tf-cheques">—</div></div>
+        <div class="mb-kpi"><div class="mb-kpi-label">Total equiv. pesos</div><div class="mb-kpi-value pos" id="mb-kpi-tf-total">—</div><div class="mb-kpi-sub" id="mb-kpi-tf-total-sub"></div></div>
+      </div>
+      <div class="mb-kpi-row" style="border-top:1px solid rgba(255,255,255,.08)">
+        <div class="mb-kpi"><div class="mb-kpi-label">⚠ Vencido</div><div class="mb-kpi-value" id="mb-kpi-tf-vencido">—</div></div>
+        <div class="mb-kpi"><div class="mb-kpi-label">Próx. 7 días</div><div class="mb-kpi-value" id="mb-kpi-tf-d7">—</div></div>
+        <div class="mb-kpi"><div class="mb-kpi-label">Próx. 15 días</div><div class="mb-kpi-value" id="mb-kpi-tf-d15">—</div></div>
+        <div class="mb-kpi"><div class="mb-kpi-label">Más de 15 días</div><div class="mb-kpi-value" id="mb-kpi-tf-d15plus">—</div></div>
+        <div class="mb-kpi total"><div class="mb-kpi-label">Total compromisos</div><div class="mb-kpi-value neg" id="mb-kpi-tf-total-venc">—</div></div>
+      </div>
+      <div class="sub-strip">
+        <span class="sub-strip-title">📋 Compromisos de Pago</span>
+        <span class="sub-strip-note">Proveedor · Fecha · Importe</span>
+      </div>
+      <div class="mb-table-wrap">
+        <table class="mb-table">
+          <thead><tr>
+            <th>Proveedor / Destino</th><th>Fecha pago</th><th class="r">Días</th><th class="r">Importe</th>
+          </tr></thead>
+          <tbody id="mb-tbody-tf"><tr><td colspan="4" class="mb-empty">Sin datos</td></tr></tbody>
+        </table>
+      </div>
+    </div>
 
-      <div class="tabpanel" id="sectab-tf-up">
+    <div class="card section-card">
+      <div class="card-head"><span class="card-title">⚙ Cargar archivos</span></div>
+      <div class="card-pad">
         <div class="upload-grid">
           <div class="upload-row">
             <div class="upload-info"><div class="upload-name">Ingresos esperados</div><div class="upload-st" id="ust-cob-tf">Sin ingresos ingresados</div></div>
@@ -580,16 +565,6 @@
 </div>
 
 <script>
-  // Pestañas de Financiera/Modo B/Cargar archivos por empresa — UI pura,
-  // no toca nada de app.js/app-patches.js.
-  function switchSecTab(co, name, evt){
-    const card = evt.currentTarget.closest('.tabs-card');
-    card.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
-    card.querySelectorAll('.tabpanel').forEach(p=>p.classList.remove('active'));
-    evt.currentTarget.classList.add('active');
-    document.getElementById('sectab-'+co+'-'+name).classList.add('active');
-  }
-
   // Modal Léeme — UI pura, no toca nada de app.js/app-patches.js.
   function openLeeme(){
     document.getElementById('leeme-overlay').classList.add('open');

@@ -3,10 +3,10 @@
 ⚠️ **Este repo es una copia de vista previa** del proyecto real
 [`cashflow-tesoreria`](https://github.com/agustin1115/cashflow-tesoreria), con
 `index.html`/`css/style.css` reorganizados visualmente: topbar con el switch
-de empresa, franja de KPIs, pestañas (Financiera / Modo B / Cargar archivos)
-en vez de la tira larga de uploads, y Cash Flow proyectado + Resumen de
-Posición lado a lado en vez de uno abajo del otro. Sirve para evaluar el
-rediseño antes de aplicarlo al repo real.
+de empresa, franja de KPIs, Financiera/Modo B/Cargar archivos como cards
+separadas y siempre visibles (en vez de la tira larga de uploads), y Cash
+Flow proyectado + Resumen de Posición lado a lado en vez de uno abajo del
+otro. Sirve para evaluar el rediseño antes de aplicarlo al repo real.
 
 ⚠️ **`js/app.js` es copia idéntica del repo real — `js/app-patches.js` NO.**
 Este repo tiene funcionalidad que el repo real todavía no tiene: el Resumen
@@ -25,9 +25,10 @@ impactar en los datos reales de ambas empresas.
 - **Topbar** fija arriba con el switch TF Carnes/Trade Food, en vez de un header
   separado + una fila de horizonte/estado aparte.
 - **Grilla de KPIs** con números grandes (Teko) en vez de la tabla de tarjetas chica.
-- **Financiera, Modo B y Cargar archivos** pasan a ser pestañas dentro de cada
-  panel de empresa, en vez de secciones siempre visibles + una tira de uploads
-  compartida arriba de todo.
+- **Financiera, Modo B y Cargar archivos** son tres cards separadas y siempre
+  visibles dentro de cada panel de empresa (no pestañas — cada una se ve
+  entera sin tener que hacer clic para cambiar), en vez de una tira de
+  uploads compartida arriba de todo.
 - **Cash Flow proyectado y Resumen de Posición van lado a lado** (grid de 2
   columnas) en vez de uno abajo del otro. El Resumen sigue siendo una sola
   instancia compartida entre las dos empresas (mismos números de ambas

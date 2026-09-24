@@ -115,6 +115,11 @@ button{font-family:inherit}
 .neg{color:var(--bad)}
 .zero{color:var(--ink-faint)}
 
+/* app.js pone el saldo BAVSA en 14px inline (style.fontSize) — tenía sentido
+   en las tarjetas chicas del diseño viejo, pero acá achica el número al lado
+   de los demás KPIs en Teko grande. Sin tocar app.js: se pisa con !important. */
+#kpi-tfc-bavsa{font-size:26px!important}
+
 /* ═══ TABLA DE CASH FLOW ═════════════════════════════════════════════ */
 .cf-table-wrap{overflow-y:auto;overflow-x:auto;max-height:480px;background:var(--surface);border:1px solid var(--border);border-top:none;border-radius:0 0 10px 10px}
 table{width:100%;border-collapse:collapse;font-size:12.5px}
@@ -142,12 +147,12 @@ tr:not(.weekend):not(.feriado):hover td{background:var(--surface-2)}
 .no-data{padding:26px;text-align:center;color:var(--ink-faint);font-size:12px;background:var(--surface)}
 
 /* ═══ PESTAÑAS: Financiera / Modo B / Cargar archivos ═══════════════ */
-.tabs-card{margin-top:14px}
-.tabbar{display:flex;gap:4px;padding:6px;background:var(--surface-2);border-bottom:1px solid var(--border);overflow-x:auto}
-.tab{border:none;background:transparent;color:var(--ink-soft);font:inherit;font-size:12.5px;font-weight:600;padding:9px 16px;border-radius:8px;cursor:pointer;white-space:nowrap}
-.tab.active{background:var(--surface);color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.08)}
-.tabpanel{display:none;padding:16px}
-.tabpanel.active{display:block}
+/* Financiera / Modo B / Cargar archivos: cards separadas y siempre visibles
+   (antes eran pestañas de una sola card compartida — fin-section/mb-section
+   ya traen su propio borde+radio, section-card solo agrega el espaciado
+   entre una y la siguiente; card-pad es el padding que usaba .tabpanel). */
+.section-card{margin-top:14px}
+.card-pad{padding:16px}
 
 .sub-strip{padding:9px 14px;background:var(--surface-2);border-bottom:1px solid var(--border-soft);display:flex;align-items:center;gap:8px;border-radius:8px 8px 0 0}
 .sub-strip-title{font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--ink)}
