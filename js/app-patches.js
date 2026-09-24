@@ -628,28 +628,16 @@ function cerrarKpiModal(){
 }
 
 // ── Cerrar semana: guarda una foto del Resumen de Posición (los dos modos,
-// las dos empresas) en el Google Sheet de cierres semanales, para poder
-// leerla después desde otra página. ─────────────────────────────────────
-//
-// ⚠️ FALTA UN PASO MANUAL para que esto funcione: escribir en un Google
-// Sheet desde una página estática (sin backend propio) requiere un Google
-// Apps Script Web App publicado — un API key normal solo sirve para LEER
-// sheets públicos, no para escribir. No lo puedo crear ni publicar yo
-// (necesita tu cuenta de Google con permiso de edición sobre ese Sheet).
-// Instrucciones completas en README.md, sección "Cerrar semana". Hasta que
-// completes CIERRE_SEMANA_URL acá abajo, el botón avisa que falta configurar
-// en vez de fallar en silencio.
-const CIERRE_SEMANA_URL = ''; // ← pegar acá la URL del Apps Script Web App (ver README)
-
+// las dos empresas) en la tabla `cierres_semanales` de Supabase — la misma
+// base que ya usa esta página para los Excel subidos — para poder leerla
+// después desde otra página. A diferencia de supaReplaceRows() (que borra
+// e inserta), acá cada cierre se AGREGA: la tabla tiene que ir acumulando
+// una fila por cierre a lo largo del tiempo, no reemplazar la anterior. ──
 function cerrarSemana(){
   const btn = document.getElementById('btn-cerrar-semana');
   const status = document.getElementById('cerrar-semana-status');
   const setStatus = (msg, cls) => { if (status) { status.textContent = msg; status.className = 'cerrar-semana-status' + (cls ? ' ' + cls : ''); } };
 
-  if (!CIERRE_SEMANA_URL) {
-    setStatus('Falta configurar CIERRE_SEMANA_URL en app-patches.js (ver README)', 'err');
-    return;
-  }
   if (!_resumenSnapshot) {
     setStatus('Todavía no terminó de cargar el Resumen de Posición — probá de nuevo en un momento', 'err');
     return;
@@ -659,38 +647,33 @@ function cerrarSemana(){
   const filas = ['tfc', 'tf'].map(co => {
     const s = _resumenSnapshot[co];
     return {
+      company: co,
       fecha: ahora.toISOString(),
-      empresa: co === 'tfc' ? 'TF Carnes' : 'Trade Food',
       bancos: s.bancos,
-      chequesEmitidos: s.chequesEmitidos,
-      cuentasAPagar: s.cuentasAPagar,
-      chequesEnCartera: s.chequesEnCartera,
+      cheques_emitidos: s.chequesEmitidos,
+      cuentas_a_pagar: s.cuentasAPagar,
+      cheques_en_cartera: s.chequesEnCartera,
       cobrar: s.cobrar,
       movidas: s.movidas,
-      incobrablesArchivoA: s.incobrablesA,
-      incobrablesArchivoB: s.incobrablesB,
-      disponibleModoB: s.disponibleModoB,
-      posicionModoA: s.posicionModoA,
-      posicionModoB: s.posicionModoB,
+      incobrables_archivo_a: s.incobrablesA,
+      incobrables_archivo_b: s.incobrablesB,
+      disponible_modo_b: s.disponibleModoB,
+      posicion_modo_a: s.posicionModoA,
+      posicion_modo_b: s.posicionModoB,
     };
   });
 
   if (btn) { btn.disabled = true; btn.textContent = '⏳ Guardando…'; }
   setStatus('', '');
 
-  // mode:'no-cors' es a propósito: los Web Apps de Apps Script casi nunca
-  // devuelven los headers CORS que el navegador pide para poder LEER la
-  // respuesta desde fetch() — pero el POST en sí SÍ le llega y se ejecuta
-  // igual. Con no-cors no podemos leer si salió bien, así que el mensaje de
-  // éxito es optimista (el catch de abajo solo agarra errores de red/URL
-  // mal puesta, no errores del lado del Apps Script).
-  fetch(CIERRE_SEMANA_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ filas }) })
-    .then(() => {
+  sb.from('cierres_semanales').insert(filas)
+    .then(({ error }) => {
+      if (error) throw error;
       setStatus('✓ Semana cerrada · ' + ahora.toLocaleDateString('es-AR') + ' ' + ahora.toLocaleTimeString('es-AR', {hour:'2-digit', minute:'2-digit'}), 'ok');
     })
     .catch(err => {
       console.error('[Cerrar semana]', err);
-      setStatus('✗ No se pudo conectar con el Sheet: ' + err.message, 'err');
+      setStatus('✗ No se pudo guardar en Supabase: ' + err.message, 'err');
     })
     .finally(() => {
       if (btn) { btn.disabled = false; btn.textContent = '🔒 Cerrar semana'; }

@@ -176,81 +176,59 @@ ninguna fuente adicional acá, es el detalle de esos mismos totales.
 ## Cerrar semana
 
 Botón debajo de "Resumen de Posición" que guarda una foto de esos números
-(los dos modos, las dos empresas, con fecha) en un Google Sheet — para
-poder armar un historial semanal y leerlo después desde otra página.
+(los dos modos, las dos empresas, con fecha) en la tabla `cierres_semanales`
+de Supabase — la misma base que ya usa esta página para los Excel subidos —
+para poder armar un historial semanal y leerlo después desde otra página.
 
-**⚠️ Requiere un paso manual tuyo que yo no puedo hacer.** Escribir en un
-Google Sheet desde una página estática como esta requiere autenticación de
-Google (OAuth) — un simple `fetch()` sin login no alcanza, y yo no tengo
-acceso a tu cuenta de Google para autorizarlo. La forma estándar de resolver
-esto sin backend propio es un **Google Apps Script Web App**: un script que
-corre "como vos" (con tu permiso de edición sobre el Sheet) y expone una URL
-pública a la que esta página le puede hacer POST.
+No requiere ningún paso manual: usa el mismo cliente Supabase (`sb`) que ya
+está inicializado en `app.js` con la URL/key del proyecto, así que funciona
+de entrada.
 
-### Cómo configurarlo (2 minutos, una sola vez)
+### Tabla
 
-1. Andá a [script.google.com](https://script.google.com/) → **Proyecto nuevo**.
-2. Borrá el código de ejemplo y pegá esto:
+```sql
+create table public.cierres_semanales (
+  id bigint generated always as identity primary key,
+  company text not null check (company = any (array['tfc', 'tf'])),
+  fecha timestamptz not null,
+  bancos numeric,
+  cheques_emitidos numeric,
+  cuentas_a_pagar numeric,
+  cheques_en_cartera numeric,
+  cobrar numeric,
+  movidas numeric,
+  incobrables_archivo_a numeric,
+  incobrables_archivo_b numeric,
+  disponible_modo_b numeric,
+  posicion_modo_a numeric,
+  posicion_modo_b numeric,
+  created_at timestamptz not null default now()
+);
+```
 
-   ```javascript
-   function doPost(e) {
-     const SHEET_ID = '1FESw_C5KQm-NIZoD7o_mtV7VIJG7Kjmmnaxzr7SmhZ4';
-     const NOMBRE_HOJA = 'Cierres';
-     const ss = SpreadsheetApp.openById(SHEET_ID);
-     const sheet = ss.getSheetByName(NOMBRE_HOJA) || ss.insertSheet(NOMBRE_HOJA);
-
-     if (sheet.getLastRow() === 0) {
-       sheet.appendRow([
-         'Fecha', 'Empresa', 'Bancos', 'Cheques emitidos', 'Cuentas a pagar',
-         'Cheques en cartera', 'Cobrar', 'Movidas', 'Incobrables Archivo A',
-         'Incobrables Archivo B', 'Disponible Modo B', 'Posición Modo A', 'Posición Modo B',
-       ]);
-     }
-
-     const data = JSON.parse(e.postData.contents);
-     data.filas.forEach(f => {
-       sheet.appendRow([
-         new Date(f.fecha), f.empresa, f.bancos, f.chequesEmitidos, f.cuentasAPagar,
-         f.chequesEnCartera, f.cobrar, f.movidas, f.incobrablesArchivoA,
-         f.incobrablesArchivoB, f.disponibleModoB, f.posicionModoA, f.posicionModoB,
-       ]);
-     });
-
-     return ContentService.createTextOutput(JSON.stringify({ ok: true }))
-       .setMimeType(ContentService.MimeType.JSON);
-   }
-   ```
-
-3. **Implementar → Nueva implementación** → tipo **Aplicación web**.
-   - Ejecutar como: **Yo** (tu cuenta — tiene que ser una con permiso de edición sobre ese Sheet).
-   - Quién tiene acceso: **Cualquier usuario**.
-4. Autorizá los permisos que pida (es tu propio script, accediendo a tu propio Sheet).
-5. Copiá la URL que te da ("URL de la aplicación web", termina en `/exec`).
-6. Pegala en `js/app-patches.js`, en esta línea (buscala, está cerca del final):
-
-   ```javascript
-   const CIERRE_SEMANA_URL = ''; // ← pegar acá la URL del Apps Script Web App
-   ```
-
-Hasta que hagas esto, el botón "Cerrar semana" no falla en silencio — te
-avisa "Falta configurar CIERRE_SEMANA_URL…" en vez de intentar guardar.
+RLS: una sola política `anon_all_cierres_semanales` (`roles=anon, cmd=ALL,
+qual=true, with_check=true`), igual que en el resto de las tablas de este
+proyecto — el `anon` key tiene acceso total, sin restricción por fila.
 
 ### Qué se guarda
 
-Cada vez que tocás el botón se agregan **2 filas** (una por empresa) con:
-fecha (como fecha real, no texto), empresa, y los mismos números que ves en
-el Resumen de Posición — Bancos, Cheques emitidos, Cuentas a pagar, Cheques
-en cartera, Cobrar, Movidas, Incobrables de Archivo A y B, Disponible Modo B,
-y la Posición final de Modo A y de Modo B — todos como números reales, no
-texto con "$" ni separadores de miles, para que se puedan sumar/graficar
-directo desde el Sheet sin tener que parsear nada.
+Cada vez que tocás el botón se **agregan 2 filas** (una por empresa,
+`company='tfc'`/`'tf'`) — a diferencia de los Excel subidos (que reemplazan
+los datos previos vía `supaReplaceRows`), acá cada cierre queda guardado
+como historial: nunca se borra ni se pisa un cierre anterior. Cada fila
+tiene: `fecha` (timestamp real), y los mismos números que ves en el Resumen
+de Posición — Bancos, Cheques emitidos, Cuentas a pagar, Cheques en
+cartera, Cobrar, Movidas, Incobrables de Archivo A y B, Disponible Modo B,
+y la Posición final de Modo A y de Modo B — todos como `numeric`, listos
+para sumar/graficar sin parsear texto.
 
-### Una limitación conocida
+### Leerlo desde otra página
 
-Los Web Apps de Apps Script casi nunca devuelven los headers CORS que un
-navegador necesita para poder **leer** la respuesta de un `fetch()` — por
-eso el POST se manda con `mode:'no-cors'`. Eso hace que el "✓ Semana
-cerrada" que ves sea **optimista**: confirma que el POST salió de tu
-navegador sin error de red, pero no que Apps Script lo haya procesado bien
-del otro lado (por ejemplo, si el Sheet ID está mal o revocaste el permiso,
-no te vas a enterar por acá — conviene revisar el Sheet de vez en cuando).
+Cualquier página con el mismo `SUPABASE_URL`/`SUPABASE_KEY` puede leer el
+historial con, por ejemplo:
+
+```javascript
+const { data } = await sb.from('cierres_semanales')
+  .select('*')
+  .order('fecha', { ascending: false });
+```

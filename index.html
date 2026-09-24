@@ -108,9 +108,9 @@
             </div>
           </div>
 
-          <!-- Guarda una foto de estos números (con fecha) en el Google Sheet
-               de cierres semanales, para poder leerla después desde otra
-               página. Ver _resumenSnapshot/cerrarSemana() en app-patches.js. -->
+          <!-- Guarda una foto de estos números (con fecha) en la tabla
+               cierres_semanales de Supabase, para poder leerla después desde
+               otra página. Ver _resumenSnapshot/cerrarSemana() en app-patches.js. -->
           <div class="cerrar-semana-box">
             <button class="btn-cerrar-semana" id="btn-cerrar-semana" onclick="cerrarSemana()">🔒 Cerrar semana</button>
             <div class="cerrar-semana-status" id="cerrar-semana-status"></div>
@@ -356,9 +356,11 @@
       flechita "↗" y son clickeables: al tocarlas se abre un detalle con los ítems
       (bancos, cheques, proveedores, clientes) que suman ese total.</p>
       <p>Debajo del Resumen de Posición hay un botón <strong>"🔒 Cerrar semana"</strong>
-      que guarda una foto de esos números (con fecha) en un Google Sheet aparte, para
-      armar un historial semanal — ver el README del repo para el detalle de qué
-      guarda y cómo configurarlo.</p>
+      que guarda una foto de esos números (con fecha) en la tabla <code>cierres_semanales</code>
+      de la base Supabase de esta página — la misma base que ya guarda los Excel
+      subidos — para armar un historial semanal que después se pueda leer desde otra
+      página. No hace falta ningún paso manual: cada click agrega una fila nueva por
+      empresa (nunca reemplaza las anteriores).</p>
 
       <h2>① Franja de KPIs (arriba de cada empresa)</h2>
       <p>Estos números vienen todos de la misma planilla: el Google Sheet <strong>"Reporte Tesorería"</strong> de cada empresa (uno para TF Carnes, otro para Trade Food — no es el mismo Sheet). Tiene una fila por banco y una fila "TOTAL".</p>
@@ -640,6 +642,6 @@
 </script>
 
 <script src="js/app.js?v=1"></script>
-<script src="js/app-patches.js?v=8"></script>
+<script src="js/app-patches.js?v=9"></script>
 </body>
 </html>
