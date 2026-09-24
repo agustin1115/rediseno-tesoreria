@@ -9,7 +9,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Teko:wght@500;600;700&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/style.css?v=6">
+<link rel="stylesheet" href="css/style.css?v=7">
 </head>
 <body>
 <div class="page">
@@ -28,6 +28,7 @@
     </div>
     <div class="topbar-actions">
       <div class="export-bar">
+        <button class="btn-export" onclick="openUploads()">⚙ Cargar archivos</button>
         <button class="btn-export btn-export-xls" onclick="exportExcel()">⬇ Excel</button>
         <button class="btn-export btn-export-pdf" onclick="exportPDF()">🖨 PDF</button>
       </div>
@@ -188,50 +189,6 @@
       </div>
     </div>
 
-    <div class="card section-card">
-      <div class="card-head"><span class="card-title">⚙ Cargar archivos</span></div>
-      <div class="card-pad">
-        <div class="upload-grid">
-          <div class="upload-row">
-            <div class="upload-info"><div class="upload-name">Ingresos esperados</div><div class="upload-st" id="ust-cob-tfc">Sin ingresos ingresados</div></div>
-            <button class="btn-rev" onclick="openPanel('tfc','cob')">+ Ingresar</button>
-          </div>
-          <div class="upload-row">
-            <div class="upload-info"><div class="upload-name">Cuentas a pagar</div><div class="upload-st" id="ust-prov-tfc">Sin datos</div></div>
-            <div style="display:flex;gap:6px;align-items:center">
-              <label class="upload-zone-sm" id="uz-prov-tfc" onclick="document.getElementById('fi-prov-tfc').click()">
-                <input type="file" id="fi-prov-tfc" accept=".xls,.xlsx,.csv" style="display:none" onchange="onProvUpload(event,'tfc')">
-                📄 Subir XLS
-              </label>
-              <button class="btn-rev" id="btn-rev-prov-tfc" onclick="openPanel('tfc','prov')" style="display:none">✎ Revisar</button>
-            </div>
-          </div>
-          <div class="upload-row">
-            <div class="upload-info"><div class="upload-name">Cheques cartera</div><div class="upload-st" id="ust-chq-tfc">Sin datos</div></div>
-            <label class="upload-zone-sm" id="uz-chq-tfc" onclick="document.getElementById('fi-chq-tfc').click()">
-              <input type="file" id="fi-chq-tfc" accept=".xlsx" style="display:none" onchange="onChqUpload(event,'tfc')">
-              📄 Subir banco
-            </label>
-          </div>
-          <div class="upload-row">
-            <div class="upload-info"><div class="upload-name">Compromisos efectivo</div><div class="upload-st" id="ust-fin-tfc">Sin datos</div></div>
-            <label class="upload-zone-sm" onclick="document.getElementById('fi-fin-tfc').click()" id="uz-fin-tfc">📄 Subir XLS</label>
-          </div>
-          <div class="upload-row">
-            <div class="upload-info"><div class="upload-name">Modo B</div><div class="upload-st" id="ust-mb-tfc">Sin datos</div></div>
-            <label class="upload-zone-sm" onclick="document.getElementById('fi-mb-tfc').click()">📄 Subir XLS</label>
-          </div>
-        </div>
-        <div class="upload-group xlsm-fb" id="xlsm-fb-tfc" style="display:none">
-          <div class="upload-lbl">Tesorería (respaldo)</div>
-          <label class="upload-zone-sm" onclick="document.getElementById('fi-xlsm-tfc').click()">
-            <input type="file" id="fi-xlsm-tfc" accept=".xlsm,.xlsx" style="display:none" onchange="onXLSMUpload(event,'tfc')">
-            📊 Subir xlsm
-          </label>
-          <div class="upload-st err" id="xlsm-fb-msg-tfc">Sin acceso al Sheet</div>
-        </div>
-      </div>
-    </div>
   </div>
 
   <!-- ═══════════════ TRADE FOOD ═══════════════ -->
@@ -309,46 +266,6 @@
       </div>
     </div>
 
-    <div class="card section-card">
-      <div class="card-head"><span class="card-title">⚙ Cargar archivos</span></div>
-      <div class="card-pad">
-        <div class="upload-grid">
-          <div class="upload-row">
-            <div class="upload-info"><div class="upload-name">Ingresos esperados</div><div class="upload-st" id="ust-cob-tf">Sin ingresos ingresados</div></div>
-            <button class="btn-rev" onclick="openPanel('tf','cob')">+ Ingresar</button>
-          </div>
-          <div class="upload-row">
-            <div class="upload-info"><div class="upload-name">Cuentas a pagar</div><div class="upload-st" id="ust-prov-tf">Sin datos</div></div>
-            <div style="display:flex;gap:6px;align-items:center">
-              <label class="upload-zone-sm tf" id="uz-prov-tf" onclick="document.getElementById('fi-prov-tf').click()">
-                <input type="file" id="fi-prov-tf" accept=".xls,.xlsx,.csv" style="display:none" onchange="onProvUpload(event,'tf')">
-                📄 Subir XLS
-              </label>
-              <button class="btn-rev" id="btn-rev-prov-tf" onclick="openPanel('tf','prov')" style="display:none">✎ Revisar</button>
-            </div>
-          </div>
-          <div class="upload-row">
-            <div class="upload-info"><div class="upload-name">Cheques cartera</div><div class="upload-st" id="ust-chq-tf">Sin datos</div></div>
-            <label class="upload-zone-sm tf" id="uz-chq-tf" onclick="document.getElementById('fi-chq-tf').click()">
-              <input type="file" id="fi-chq-tf" accept=".xlsx" style="display:none" onchange="onChqUpload(event,'tf')">
-              📄 Subir banco
-            </label>
-          </div>
-          <div class="upload-row">
-            <div class="upload-info"><div class="upload-name">Modo B</div><div class="upload-st" id="ust-mb-tf">Sin datos</div></div>
-            <label class="upload-zone-sm tf" onclick="document.getElementById('fi-mb-tf').click()">📄 Subir XLS</label>
-          </div>
-        </div>
-        <div class="upload-group xlsm-fb" id="xlsm-fb-tf" style="display:none">
-          <div class="upload-lbl">Tesorería (respaldo)</div>
-          <label class="upload-zone-sm tf" onclick="document.getElementById('fi-xlsm-tf').click()">
-            <input type="file" id="fi-xlsm-tf" accept=".xlsm,.xlsx" style="display:none" onchange="onXLSMUpload(event,'tf')">
-            📊 Subir xlsm
-          </label>
-          <div class="upload-st err" id="xlsm-fb-msg-tf">Sin acceso al Sheet</div>
-        </div>
-      </div>
-    </div>
   </div>
 
   <!-- ═══ DETALLE (comparte ambas empresas) ═══ -->
@@ -564,6 +481,103 @@
   </div>
 </div>
 
+<!-- MODAL CARGAR ARCHIVOS — mismo patrón visual que el modal Léeme. Junta las -->
+<!-- dos cards de uploads (TF Carnes y Trade Food) que antes vivían apiladas  -->
+<!-- en cada panel de empresa; los ids de cada input/estado son EXACTAMENTE  -->
+<!-- los mismos de antes, solo cambió dónde viven en la página. -->
+<div class="leeme-overlay" id="uploads-overlay" onclick="if(event.target===this)closeUploads()">
+  <div class="leeme-modal">
+    <div class="leeme-head">
+      <div>
+        <div class="leeme-head-title">⚙ Cargar archivos</div>
+        <div class="leeme-head-sub">TF Carnes y Trade Food</div>
+      </div>
+      <button class="leeme-close" onclick="closeUploads()">×</button>
+    </div>
+    <div class="leeme-body">
+
+      <h2>TF Carnes</h2>
+      <div class="upload-grid">
+        <div class="upload-row">
+          <div class="upload-info"><div class="upload-name">Ingresos esperados</div><div class="upload-st" id="ust-cob-tfc">Sin ingresos ingresados</div></div>
+          <button class="btn-rev" onclick="openPanel('tfc','cob')">+ Ingresar</button>
+        </div>
+        <div class="upload-row">
+          <div class="upload-info"><div class="upload-name">Cuentas a pagar</div><div class="upload-st" id="ust-prov-tfc">Sin datos</div></div>
+          <div style="display:flex;gap:6px;align-items:center">
+            <label class="upload-zone-sm" id="uz-prov-tfc" onclick="document.getElementById('fi-prov-tfc').click()">
+              <input type="file" id="fi-prov-tfc" accept=".xls,.xlsx,.csv" style="display:none" onchange="onProvUpload(event,'tfc')">
+              📄 Subir XLS
+            </label>
+            <button class="btn-rev" id="btn-rev-prov-tfc" onclick="openPanel('tfc','prov')" style="display:none">✎ Revisar</button>
+          </div>
+        </div>
+        <div class="upload-row">
+          <div class="upload-info"><div class="upload-name">Cheques cartera</div><div class="upload-st" id="ust-chq-tfc">Sin datos</div></div>
+          <label class="upload-zone-sm" id="uz-chq-tfc" onclick="document.getElementById('fi-chq-tfc').click()">
+            <input type="file" id="fi-chq-tfc" accept=".xlsx" style="display:none" onchange="onChqUpload(event,'tfc')">
+            📄 Subir banco
+          </label>
+        </div>
+        <div class="upload-row">
+          <div class="upload-info"><div class="upload-name">Compromisos efectivo</div><div class="upload-st" id="ust-fin-tfc">Sin datos</div></div>
+          <label class="upload-zone-sm" onclick="document.getElementById('fi-fin-tfc').click()" id="uz-fin-tfc">📄 Subir XLS</label>
+        </div>
+        <div class="upload-row">
+          <div class="upload-info"><div class="upload-name">Modo B</div><div class="upload-st" id="ust-mb-tfc">Sin datos</div></div>
+          <label class="upload-zone-sm" onclick="document.getElementById('fi-mb-tfc').click()">📄 Subir XLS</label>
+        </div>
+      </div>
+      <div class="upload-group xlsm-fb" id="xlsm-fb-tfc" style="display:none">
+        <div class="upload-lbl">Tesorería (respaldo)</div>
+        <label class="upload-zone-sm" onclick="document.getElementById('fi-xlsm-tfc').click()">
+          <input type="file" id="fi-xlsm-tfc" accept=".xlsm,.xlsx" style="display:none" onchange="onXLSMUpload(event,'tfc')">
+          📊 Subir xlsm
+        </label>
+        <div class="upload-st err" id="xlsm-fb-msg-tfc">Sin acceso al Sheet</div>
+      </div>
+
+      <h2>Trade Food</h2>
+      <div class="upload-grid">
+        <div class="upload-row">
+          <div class="upload-info"><div class="upload-name">Ingresos esperados</div><div class="upload-st" id="ust-cob-tf">Sin ingresos ingresados</div></div>
+          <button class="btn-rev" onclick="openPanel('tf','cob')">+ Ingresar</button>
+        </div>
+        <div class="upload-row">
+          <div class="upload-info"><div class="upload-name">Cuentas a pagar</div><div class="upload-st" id="ust-prov-tf">Sin datos</div></div>
+          <div style="display:flex;gap:6px;align-items:center">
+            <label class="upload-zone-sm tf" id="uz-prov-tf" onclick="document.getElementById('fi-prov-tf').click()">
+              <input type="file" id="fi-prov-tf" accept=".xls,.xlsx,.csv" style="display:none" onchange="onProvUpload(event,'tf')">
+              📄 Subir XLS
+            </label>
+            <button class="btn-rev" id="btn-rev-prov-tf" onclick="openPanel('tf','prov')" style="display:none">✎ Revisar</button>
+          </div>
+        </div>
+        <div class="upload-row">
+          <div class="upload-info"><div class="upload-name">Cheques cartera</div><div class="upload-st" id="ust-chq-tf">Sin datos</div></div>
+          <label class="upload-zone-sm tf" id="uz-chq-tf" onclick="document.getElementById('fi-chq-tf').click()">
+            <input type="file" id="fi-chq-tf" accept=".xlsx" style="display:none" onchange="onChqUpload(event,'tf')">
+            📄 Subir banco
+          </label>
+        </div>
+        <div class="upload-row">
+          <div class="upload-info"><div class="upload-name">Modo B</div><div class="upload-st" id="ust-mb-tf">Sin datos</div></div>
+          <label class="upload-zone-sm tf" onclick="document.getElementById('fi-mb-tf').click()">📄 Subir XLS</label>
+        </div>
+      </div>
+      <div class="upload-group xlsm-fb" id="xlsm-fb-tf" style="display:none">
+        <div class="upload-lbl">Tesorería (respaldo)</div>
+        <label class="upload-zone-sm tf" onclick="document.getElementById('fi-xlsm-tf').click()">
+          <input type="file" id="fi-xlsm-tf" accept=".xlsm,.xlsx" style="display:none" onchange="onXLSMUpload(event,'tf')">
+          📊 Subir xlsm
+        </label>
+        <div class="upload-st err" id="xlsm-fb-msg-tf">Sin acceso al Sheet</div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
 <script>
   // Modal Léeme — UI pura, no toca nada de app.js/app-patches.js.
   function openLeeme(){
@@ -572,6 +586,16 @@
   }
   function closeLeeme(){
     document.getElementById('leeme-overlay').classList.remove('open');
+    document.body.style.overflow = '';
+  }
+
+  // Modal Cargar archivos — misma UI pura, mismo patrón que Léeme.
+  function openUploads(){
+    document.getElementById('uploads-overlay').classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+  function closeUploads(){
+    document.getElementById('uploads-overlay').classList.remove('open');
     document.body.style.overflow = '';
   }
 </script>
