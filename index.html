@@ -9,7 +9,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Teko:wght@500;600;700&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/style.css?v=2">
+<link rel="stylesheet" href="css/style.css?v=3">
 </head>
 <body>
 <div class="page">
@@ -51,31 +51,61 @@
 
   <!-- ═══════════════ TF CARNES ═══════════════ -->
   <div id="co-panel-tfc">
-    <div class="co-header tfc">TF CARNES &nbsp;·&nbsp; <span class="co-header-sub">CASH FLOW PROYECTADO</span></div>
+    <div class="cfrs-grid">
+      <div class="panel-cf">
+        <div class="co-header tfc">TF CARNES &nbsp;·&nbsp; <span class="co-header-sub">CASH FLOW PROYECTADO</span></div>
 
-    <div class="kpi-block">
-      <div class="kpi-row">
-        <div class="kpi"><div class="kpi-label">Saldo bancos</div><div class="kpi-value" id="kpi-tfc-bancos">—</div><div class="kpi-sub" id="kpi-tfc-fecha">—</div></div>
-        <div class="kpi"><div class="kpi-label">Acuerdos descubierto</div><div class="kpi-value" id="kpi-tfc-desc">—</div></div>
-        <div class="kpi accent"><div class="kpi-label">Disponible para operar</div><div class="kpi-value" id="kpi-tfc-disp">—</div><div class="kpi-sub" id="kpi-tfc-disp-sub"></div></div>
+        <div class="kpi-block">
+          <div class="kpi-row">
+            <div class="kpi"><div class="kpi-label">Saldo bancos</div><div class="kpi-value" id="kpi-tfc-bancos">—</div><div class="kpi-sub" id="kpi-tfc-fecha">—</div></div>
+            <div class="kpi"><div class="kpi-label">Acuerdos descubierto</div><div class="kpi-value" id="kpi-tfc-desc">—</div></div>
+            <div class="kpi accent"><div class="kpi-label">Disponible para operar</div><div class="kpi-value" id="kpi-tfc-disp">—</div><div class="kpi-sub" id="kpi-tfc-disp-sub"></div></div>
+          </div>
+          <div class="kpi-row" style="grid-template-columns:repeat(5,1fr)">
+            <div class="kpi"><div class="kpi-label">Cartera cheques</div><div class="kpi-value pos" id="kpi-tfc-cartera">—</div><div class="kpi-sub" id="kpi-tfc-nchq">—</div></div>
+            <div class="kpi"><div class="kpi-label">Saldo BAVSA</div><div class="kpi-value" id="kpi-tfc-bavsa">—</div></div>
+            <div class="kpi accent"><div class="kpi-label">Fondos disponibles</div><div class="kpi-value pos" id="kpi-tfc-cartera-total">—</div><div class="kpi-sub">Cartera + BAVSA</div></div>
+            <div class="kpi"><div class="kpi-label">Chq emitidos (total)</div><div class="kpi-value neg" id="kpi-tfc-emitidos">—</div><div class="kpi-sub" id="kpi-tfc-nemitidos">—</div></div>
+            <div class="kpi"><div class="kpi-label">Cuentas a pagar</div><div class="kpi-value neg" id="kpi-tfc-cpagar">—</div><div class="kpi-sub" id="kpi-tfc-ncpagar">—</div></div>
+          </div>
+        </div>
+
+        <div class="cf-table-wrap"><table>
+          <thead class="thead-tfc"><tr>
+            <th style="text-align:left;min-width:100px">Fecha</th>
+            <th>Saldo inicio</th><th>Chq emitidos</th>
+            <th>Pagos</th><th>Ingresos</th><th>Saldo fin</th><th>Disponible</th>
+          </tr></thead>
+          <tbody id="tbody-tfc"><tr><td colspan="7" class="no-data">Cargando datos...</td></tr></tbody>
+        </table></div>
       </div>
-      <div class="kpi-row" style="grid-template-columns:repeat(5,1fr)">
-        <div class="kpi"><div class="kpi-label">Cartera cheques</div><div class="kpi-value pos" id="kpi-tfc-cartera">—</div><div class="kpi-sub" id="kpi-tfc-nchq">—</div></div>
-        <div class="kpi"><div class="kpi-label">Saldo BAVSA</div><div class="kpi-value" id="kpi-tfc-bavsa">—</div></div>
-        <div class="kpi accent"><div class="kpi-label">Fondos disponibles</div><div class="kpi-value pos" id="kpi-tfc-cartera-total">—</div><div class="kpi-sub">Cartera + BAVSA</div></div>
-        <div class="kpi"><div class="kpi-label">Chq emitidos (total)</div><div class="kpi-value neg" id="kpi-tfc-emitidos">—</div><div class="kpi-sub" id="kpi-tfc-nemitidos">—</div></div>
-        <div class="kpi"><div class="kpi-label">Cuentas a pagar</div><div class="kpi-value neg" id="kpi-tfc-cpagar">—</div><div class="kpi-sub" id="kpi-tfc-ncpagar">—</div></div>
+
+      <!-- Resumen de Posición se muda acá (rs-slot-tfc/rs-slot-tf) según la
+           empresa activa — ver switchCoTab() parcheado en app-patches.js.
+           TFC es la empresa activa por defecto, así que arranca acá. -->
+      <div class="panel-rs" id="rs-slot-tfc">
+        <div class="card resumen-section" id="resumen-section">
+          <div class="card-head resumen-header">
+            <div class="card-title-group">
+              <span class="card-title">📊 Resumen de Posición</span>
+              <span class="card-title-note">TF Carnes · Trade Food</span>
+            </div>
+            <div class="rs-mode-tabs">
+              <button class="rs-mtab active" id="rsmtab-a" onclick="switchResumenModo('a')">Modo A</button>
+              <button class="rs-mtab" id="rsmtab-b" onclick="switchResumenModo('b')">Modo B</button>
+            </div>
+            <button onclick="renderResumen()" class="btn-resumen-refresh">↺ Actualizar</button>
+          </div>
+          <div class="resumen-body">
+            <table class="resumen-table" id="resumen-table">
+              <tbody>
+                <tr><td colspan="3" style="padding:18px;text-align:center;color:var(--ink-faint);font-size:12px">Cargando resumen…</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
       </div>
     </div>
-
-    <div class="cf-table-wrap"><table>
-      <thead class="thead-tfc"><tr>
-        <th style="text-align:left;min-width:100px">Fecha</th>
-        <th>Saldo inicio</th><th>Chq emitidos</th>
-        <th>Pagos</th><th>Ingresos</th><th>Saldo fin</th><th>Disponible</th>
-      </tr></thead>
-      <tbody id="tbody-tfc"><tr><td colspan="7" class="no-data">Cargando datos...</td></tr></tbody>
-    </table></div>
 
     <!-- ── Panel con pestañas: Financiera / Modo B / Cargar archivos ── -->
     <div class="card tabs-card">
@@ -215,29 +245,35 @@
 
   <!-- ═══════════════ TRADE FOOD ═══════════════ -->
   <div id="co-panel-tf" style="display:none">
-    <div class="co-header tf">TRADE FOOD &nbsp;·&nbsp; <span class="co-header-sub">CASH FLOW PROYECTADO</span></div>
+    <div class="cfrs-grid">
+      <div class="panel-cf">
+        <div class="co-header tf">TRADE FOOD &nbsp;·&nbsp; <span class="co-header-sub">CASH FLOW PROYECTADO</span></div>
 
-    <div class="kpi-block">
-      <div class="kpi-row">
-        <div class="kpi"><div class="kpi-label">Saldo bancos</div><div class="kpi-value" id="kpi-tf-bancos">—</div><div class="kpi-sub" id="kpi-tf-fecha">—</div></div>
-        <div class="kpi"><div class="kpi-label">Acuerdos descubierto</div><div class="kpi-value" id="kpi-tf-desc">—</div></div>
-        <div class="kpi accent"><div class="kpi-label">Disponible para operar</div><div class="kpi-value" id="kpi-tf-disp">—</div><div class="kpi-sub" id="kpi-tf-disp-sub"></div></div>
+        <div class="kpi-block">
+          <div class="kpi-row">
+            <div class="kpi"><div class="kpi-label">Saldo bancos</div><div class="kpi-value" id="kpi-tf-bancos">—</div><div class="kpi-sub" id="kpi-tf-fecha">—</div></div>
+            <div class="kpi"><div class="kpi-label">Acuerdos descubierto</div><div class="kpi-value" id="kpi-tf-desc">—</div></div>
+            <div class="kpi accent"><div class="kpi-label">Disponible para operar</div><div class="kpi-value" id="kpi-tf-disp">—</div><div class="kpi-sub" id="kpi-tf-disp-sub"></div></div>
+          </div>
+          <div class="kpi-row">
+            <div class="kpi"><div class="kpi-label">Cartera cheques</div><div class="kpi-value pos" id="kpi-tf-cartera">—</div><div class="kpi-sub" id="kpi-tf-nchq">—</div></div>
+            <div class="kpi"><div class="kpi-label">Chq emitidos (total)</div><div class="kpi-value neg" id="kpi-tf-emitidos">—</div><div class="kpi-sub" id="kpi-tf-nemitidos">—</div></div>
+            <div class="kpi"><div class="kpi-label">Cuentas a pagar</div><div class="kpi-value neg" id="kpi-tf-cpagar">—</div><div class="kpi-sub" id="kpi-tf-ncpagar">—</div></div>
+          </div>
+        </div>
+
+        <div class="cf-table-wrap"><table>
+          <thead class="thead-tf"><tr>
+            <th style="text-align:left;min-width:100px">Fecha</th>
+            <th>Saldo inicio</th><th>Chq emitidos</th>
+            <th>Pagos</th><th>Ingresos</th><th>Saldo fin</th><th>Disponible</th>
+          </tr></thead>
+          <tbody id="tbody-tf"><tr><td colspan="7" class="no-data">Cargando datos...</td></tr></tbody>
+        </table></div>
       </div>
-      <div class="kpi-row">
-        <div class="kpi"><div class="kpi-label">Cartera cheques</div><div class="kpi-value pos" id="kpi-tf-cartera">—</div><div class="kpi-sub" id="kpi-tf-nchq">—</div></div>
-        <div class="kpi"><div class="kpi-label">Chq emitidos (total)</div><div class="kpi-value neg" id="kpi-tf-emitidos">—</div><div class="kpi-sub" id="kpi-tf-nemitidos">—</div></div>
-        <div class="kpi"><div class="kpi-label">Cuentas a pagar</div><div class="kpi-value neg" id="kpi-tf-cpagar">—</div><div class="kpi-sub" id="kpi-tf-ncpagar">—</div></div>
-      </div>
+
+      <div class="panel-rs" id="rs-slot-tf"></div>
     </div>
-
-    <div class="cf-table-wrap"><table>
-      <thead class="thead-tf"><tr>
-        <th style="text-align:left;min-width:100px">Fecha</th>
-        <th>Saldo inicio</th><th>Chq emitidos</th>
-        <th>Pagos</th><th>Ingresos</th><th>Saldo fin</th><th>Disponible</th>
-      </tr></thead>
-      <tbody id="tbody-tf"><tr><td colspan="7" class="no-data">Cargando datos...</td></tr></tbody>
-    </table></div>
 
     <div class="card tabs-card">
       <div class="tabbar">
@@ -330,28 +366,6 @@
     </div>
   </div>
 
-  <!-- ═══ RESUMEN DE POSICIÓN (comparte ambas empresas, no cambia con el switch) ═══ -->
-  <div class="card resumen-section" id="resumen-section">
-    <div class="card-head resumen-header">
-      <div class="card-title-group">
-        <span class="card-title">📊 Resumen de Posición</span>
-        <span class="card-title-note">TF Carnes · Trade Food</span>
-      </div>
-      <div class="rs-mode-tabs">
-        <button class="rs-mtab active" id="rsmtab-a" onclick="switchResumenModo('a')">Modo A</button>
-        <button class="rs-mtab" id="rsmtab-b" onclick="switchResumenModo('b')">Modo B</button>
-      </div>
-      <button onclick="renderResumen()" class="btn-resumen-refresh">↺ Actualizar</button>
-    </div>
-    <div class="resumen-body">
-      <table class="resumen-table" id="resumen-table">
-        <tbody>
-          <tr><td colspan="3" style="padding:18px;text-align:center;color:var(--ink-faint);font-size:12px">Cargando resumen…</td></tr>
-        </tbody>
-      </table>
-    </div>
-  </div>
-
   <!-- ═══ DETALLE (comparte ambas empresas) ═══ -->
   <div class="detail-section" id="detail-section">
     <div class="detail-tabs">
@@ -410,6 +424,6 @@
 </script>
 
 <script src="js/app.js?v=1"></script>
-<script src="js/app-patches.js?v=2"></script>
+<script src="js/app-patches.js?v=3"></script>
 </body>
 </html>

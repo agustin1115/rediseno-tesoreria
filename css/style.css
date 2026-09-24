@@ -33,6 +33,15 @@ button{font-family:inherit}
 /* co-panel: mismo look para ambas empresas, la marca vive en el co-header y en los accents */
 #co-panel-tfc, #co-panel-tf{margin-bottom:28px}
 
+/* Cash Flow proyectado + Resumen de Posición lado a lado (no apilados). El
+   Resumen es una sola instancia que se muda entre rs-slot-tfc/rs-slot-tf al
+   cambiar de empresa (switchCoTab parcheado en app-patches.js), por eso el
+   slot vacío de la empresa no activa simplemente no ocupa lugar. */
+.cfrs-grid{display:grid;grid-template-columns:minmax(0,8fr) minmax(0,4fr);gap:20px;align-items:start;margin-bottom:20px}
+.panel-cf{min-width:0}
+.panel-rs{min-width:0}
+@media (max-width:960px){ .cfrs-grid{grid-template-columns:1fr} }
+
 /* ═══ TOPBAR ═══════════════════════════════════════════════════════ */
 .topbar{
   background:var(--topbar); color:var(--topbar-ink); border-radius:12px;

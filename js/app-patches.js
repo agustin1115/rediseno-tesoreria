@@ -422,3 +422,21 @@ renderAll = function(){
   _origRenderAll();
   renderResumen();
 };
+
+// ── Resumen de Posición al lado del Cash Flow de la empresa activa ─────────
+// #resumen-section es una sola instancia (un solo resumen-table, un solo
+// switchResumenModo) que se muda de contenedor según la empresa activa, en
+// vez de duplicarse — así no hay dos tablas ni ids repetidos. rs-slot-tfc/
+// rs-slot-tf son los dos posibles destinos (uno al lado de cada Cash Flow).
+function cobPlaceResumen(co){
+  const section = document.getElementById('resumen-section');
+  const slot = document.getElementById(co === 'tf' ? 'rs-slot-tf' : 'rs-slot-tfc');
+  if (section && slot && section.parentElement !== slot) slot.appendChild(section);
+}
+cobPlaceResumen(typeof _coTab !== 'undefined' ? _coTab : 'tfc');
+
+const _origSwitchCoTab = switchCoTab;
+switchCoTab = function(co){
+  _origSwitchCoTab(co);
+  cobPlaceResumen(co);
+};
