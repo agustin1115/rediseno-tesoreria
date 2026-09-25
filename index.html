@@ -28,6 +28,7 @@
     </div>
     <div class="topbar-actions">
       <div class="export-bar">
+        <a class="btn-export" href="seguimiento.html">📈 Seguimiento</a>
         <button class="btn-export" onclick="openUploads()">⚙ Cargar archivos</button>
         <button class="btn-export btn-export-xls" onclick="exportExcel()">⬇ Excel</button>
         <button class="btn-export btn-export-pdf" onclick="exportPDF()">🖨 PDF</button>
@@ -112,6 +113,7 @@
                cierres_semanales de Supabase, para poder leerla después desde
                otra página. Ver _resumenSnapshot/cerrarSemana() en app-patches.js. -->
           <div class="cerrar-semana-box">
+            <input type="text" class="cerrar-semana-nota" id="cerrar-semana-nota" placeholder="Nota (opcional) — ej: se adelantó pago a proveedor" maxlength="300">
             <button class="btn-cerrar-semana" id="btn-cerrar-semana" onclick="cerrarSemana()">🔒 Cerrar semana</button>
             <div class="cerrar-semana-status" id="cerrar-semana-status"></div>
           </div>
@@ -356,11 +358,12 @@
       flechita "↗" y son clickeables: al tocarlas se abre un detalle con los ítems
       (bancos, cheques, proveedores, clientes) que suman ese total.</p>
       <p>Debajo del Resumen de Posición hay un botón <strong>"🔒 Cerrar semana"</strong>
-      que guarda una foto de esos números (con fecha) en la tabla <code>cierres_semanales</code>
-      de la base Supabase de esta página — la misma base que ya guarda los Excel
-      subidos — para armar un historial semanal que después se pueda leer desde otra
-      página. No hace falta ningún paso manual: cada click agrega una fila nueva por
-      empresa (nunca reemplaza las anteriores).</p>
+      que guarda una foto de esos números (con fecha, y con nota opcional) en la tabla
+      <code>cierres_semanales</code> de la base Supabase de esta página — la misma base
+      que ya guarda los Excel subidos. No hace falta ningún paso manual: cada click
+      agrega una fila nueva por empresa (nunca reemplaza las anteriores). El botón
+      <strong>"📈 Seguimiento"</strong> de la topbar abre ese historial — evolución
+      semanal, apertura por concepto y el registro completo con la nota editable.</p>
 
       <h2>① Franja de KPIs (arriba de cada empresa)</h2>
       <p>Estos números vienen todos de la misma planilla: el Google Sheet <strong>"Reporte Tesorería"</strong> de cada empresa (uno para TF Carnes, otro para Trade Food — no es el mismo Sheet). Tiene una fila por banco y una fila "TOTAL".</p>

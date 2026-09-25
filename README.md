@@ -202,7 +202,13 @@ create table public.cierres_semanales (
   disponible_modo_b numeric,
   posicion_modo_a numeric,
   posicion_modo_b numeric,
-  created_at timestamptz not null default now()
+  created_at timestamptz not null default now(),
+  -- agregados después, para el tablero seguimiento.html:
+  disponible_operar numeric,
+  saldo_15d numeric,
+  saldo_30d numeric,
+  minimo_30d numeric,
+  nota text
 );
 ```
 
@@ -221,6 +227,29 @@ de Posición — Bancos, Cheques emitidos, Cuentas a pagar, Cheques en
 cartera, Cobrar, Movidas, Incobrables de Archivo A y B, Disponible Modo B,
 y la Posición final de Modo A y de Modo B — todos como `numeric`, listos
 para sumar/graficar sin parsear texto.
+
+Además, `getCashflowProyeccion()` en `app-patches.js` corre `buildCF(co,30)`
+(la misma proyección de la tabla "Cash Flow Proyectado", pero siempre a 30
+días fijos, sin importar el horizonte que esté eligiendo el usuario en
+pantalla en ese momento) y guarda: `disponible_operar` (día 0 = Saldo
+bancos + Acuerdos descubierto, el mismo número que la tarjeta KPI),
+`saldo_15d`/`saldo_30d` (esa misma proyección a 15/30 días) y `minimo_30d`
+(el mínimo de esos 30 días — el peor momento proyectado del mes). El campo
+`nota` es un texto libre opcional: se puede cargar al cerrar (input junto
+al botón) o editar después desde el registro en `seguimiento.html`.
+
+### `seguimiento.html` — el tablero que lee este historial
+
+Página nueva (botón "📈 Seguimiento" en la topbar de `index.html`) que lee
+`cierres_semanales` y arma: 3 tarjetas KPI (TF Carnes / Trade Food /
+Consolidado, con Δ vs cierre anterior y vs 4 cierres atrás), un chart de
+posición por semana, un chart de variación semana a semana, un chart de
+disponible vs. mínimo proyectado a 30 días (por empresa), una tabla de
+apertura por concepto (últimos 8 cierres + Δ) y el registro completo de
+cierres con la nota editable inline. Es de solo lectura salvo por la nota
+— todo lo demás sale de sumar/restar lo que ya guardó "🔒 Cerrar semana",
+sin escribir nada nuevo. Toggle Modo A/B y selector de período (8/13/26/52
+semanas o todas) controlan qué se ve, no qué se guarda.
 
 ### Leerlo desde otra página
 

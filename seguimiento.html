@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Seguimiento de Cierres · Tesorería</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.4/chart.umd.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Teko:wght@500;600;700&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css?v=10">
+<link rel="stylesheet" href="css/seguimiento.css?v=1">
+</head>
+<body>
+<div class="page">
+
+  <!-- ═══ TOPBAR ═══ -->
+  <div class="topbar">
+    <div class="brand">
+      <span class="header-title">Seguimiento de Cierres</span>
+      <span class="header-sub" id="hdr-ultimo-cierre"></span>
+    </div>
+    <div class="topbar-actions">
+      <div class="h-tabs" role="group" aria-label="Modo">
+        <button class="h-tab active" id="modo-a" onclick="SEG.setModo('a')">Modo A</button>
+        <button class="h-tab" id="modo-b" onclick="SEG.setModo('b')">Modo B</button>
+      </div>
+      <select class="periodo-select" id="periodo-select" onchange="SEG.setPeriodo(this.value)">
+        <option value="8">Últimas 8 semanas</option>
+        <option value="13">Últimas 13 semanas</option>
+        <option value="26" selected>Últimas 26 semanas</option>
+        <option value="52">Últimas 52 semanas</option>
+        <option value="all">Todas</option>
+      </select>
+      <button class="btn-export" onclick="SEG.exportExcelSeguimiento()">⬇ Excel</button>
+      <a class="btn-refresh" href="index.html">← Cash Flow</a>
+    </div>
+  </div>
+
+  <div id="seg-empty" class="empty-state" hidden>
+    <div class="empty-state-title">Todavía no se cerró ninguna semana</div>
+    <p>Andá a <a href="index.html">Cash Flow Proyectado</a> y tocá el botón <strong>“🔒 Cerrar semana”</strong> debajo del Resumen de Posición — cada cierre que hagas va a aparecer acá.</p>
+    <p id="load-status" class="st-item"></p>
+  </div>
+
+  <div id="seg-content" hidden>
+
+    <!-- ═══ TARJETAS KPI ═══ -->
+    <div class="kpi-cards-row">
+      <div class="kpi-card tfc" id="kpi-card-tfc">
+        <div class="kpi-card-title">TF Carnes</div>
+        <div class="kpi-card-sub"></div>
+        <div class="kpi-card-value"></div>
+        <div class="kpi-card-delta1"></div>
+        <div class="kpi-card-delta2"></div>
+        <div class="kpi-card-minis">
+          <div class="kpi-mini"><div class="kpi-mini-label">Disponible p/ operar</div><div class="kpi-mini-value kpi-mini-disp"></div></div>
+          <div class="kpi-mini"><div class="kpi-mini-label">Mín. cash flow 30 d</div><div class="kpi-mini-value kpi-mini-min"></div></div>
+        </div>
+      </div>
+      <div class="kpi-card tf" id="kpi-card-tf">
+        <div class="kpi-card-title">Trade Food</div>
+        <div class="kpi-card-sub"></div>
+        <div class="kpi-card-value"></div>
+        <div class="kpi-card-delta1"></div>
+        <div class="kpi-card-delta2"></div>
+        <div class="kpi-card-minis">
+          <div class="kpi-mini"><div class="kpi-mini-label">Disponible p/ operar</div><div class="kpi-mini-value kpi-mini-disp"></div></div>
+          <div class="kpi-mini"><div class="kpi-mini-label">Mín. cash flow 30 d</div><div class="kpi-mini-value kpi-mini-min"></div></div>
+        </div>
+      </div>
+      <div class="kpi-card consolidado" id="kpi-card-consolidado">
+        <div class="kpi-card-title">Consolidado</div>
+        <div class="kpi-card-sub"></div>
+        <div class="kpi-card-value"></div>
+        <div class="kpi-card-delta1"></div>
+        <div class="kpi-card-delta2"></div>
+        <div class="kpi-card-minis">
+          <div class="kpi-mini"><div class="kpi-mini-label">Disponible p/ operar</div><div class="kpi-mini-value kpi-mini-disp"></div></div>
+          <div class="kpi-mini"><div class="kpi-mini-label">Mín. cash flow 30 d</div><div class="kpi-mini-value kpi-mini-min"></div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ CHARTS: Posición por semana + Variación ═══ -->
+    <div class="charts-grid-2">
+      <div class="card chart-card">
+        <div class="card-head"><span class="card-title">Posición por semana</span></div>
+        <div class="card-title-note chart-sub">Millones de pesos</div>
+        <div class="chart-wrap"><canvas id="chart-posicion"></canvas></div>
+      </div>
+      <div class="card chart-card">
+        <div class="card-head"><span class="card-title">Variación vs. cierre anterior</span></div>
+        <div class="card-title-note chart-sub">Millones de pesos</div>
+        <div class="chart-wrap"><canvas id="chart-variacion"></canvas></div>
+      </div>
+    </div>
+
+    <!-- ═══ CHART: Cash flow disponible/mínimo proyectado ═══ -->
+    <div class="card chart-card section-card">
+      <div class="card-head">
+        <span class="card-title">Cash flow: disponible y mínimo proyectado a 30 días</span>
+        <div class="h-tabs">
+          <button class="h-tab active" onclick="SEG.setCoCashflow('tfc', this)">TF Carnes</button>
+          <button class="h-tab" onclick="SEG.setCoCashflow('tf', this)">Trade Food</button>
+        </div>
+      </div>
+      <div class="card-title-note chart-sub" id="cf-chart-sub"></div>
+      <div class="chart-wrap chart-wrap-wide"><canvas id="chart-cashflow"></canvas></div>
+    </div>
+
+    <!-- ═══ APERTURA POR CONCEPTO ═══ -->
+    <div class="card section-card">
+      <div class="card-head">
+        <div class="card-title-group">
+          <span class="card-title">Apertura por concepto</span>
+          <span class="card-title-note">últimos 8 cierres · Δ = último vs anterior</span>
+        </div>
+        <div class="h-tabs">
+          <button class="h-tab active" onclick="SEG.setCoConcepto('tfc', this)">TF Carnes</button>
+          <button class="h-tab" onclick="SEG.setCoConcepto('tf', this)">Trade Food</button>
+        </div>
+      </div>
+      <div class="cf-table-wrap concepto-table-wrap">
+        <table class="concepto-table">
+          <thead id="concepto-thead"></thead>
+          <tbody id="concepto-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ═══ REGISTRO DE CIERRES ═══ -->
+    <div class="card section-card">
+      <div class="card-head">
+        <div class="card-title-group">
+          <span class="card-title">Registro de cierres</span>
+          <span class="card-title-note" id="registro-count"></span>
+        </div>
+      </div>
+      <div class="cf-table-wrap registro-table-wrap">
+        <table class="registro-table">
+          <thead>
+            <tr>
+              <th>Semana</th><th>Fecha cierre</th><th>Empresa</th><th>Posición A</th><th>Posición B</th>
+              <th>Disp. p/ operar</th><th>Mín. CF 30 D</th><th>Nota</th><th>Registrado</th>
+            </tr>
+          </thead>
+          <tbody id="registro-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+
+</div>
+<script src="js/seguimiento.js?v=1"></script>
+</body>
+</html>

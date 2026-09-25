@@ -627,15 +627,34 @@ function cerrarKpiModal(){
   document.body.style.overflow = '';
 }
 
+// Proyección de cash flow al momento del cierre — mismos números que la
+// tabla "Cash Flow Proyectado" (buildCF) y la tarjeta "Disponible para
+// operar" (Saldo bancos + Acuerdos descubierto), pero calculados con un
+// horizonte fijo de 30 días sin importar qué horizonte esté eligiendo el
+// usuario en pantalla en ese momento.
+function getCashflowProyeccion(co){
+  const desc = co === 'tfc' ? (tfcOpBancos().desc || 0) : (st.tf.descubiertos || 0);
+  const rows = buildCF(co, 30);
+  const disponibles = rows.map(r => r.saldoFin + desc);
+  return {
+    disponibleOperar: disponibles[0] ?? null,
+    saldo15d: disponibles[14] ?? null,
+    saldo30d: disponibles[29] ?? null,
+    minimo30d: disponibles.length ? Math.min(...disponibles) : null,
+  };
+}
+
 // ── Cerrar semana: guarda una foto del Resumen de Posición (los dos modos,
 // las dos empresas) en la tabla `cierres_semanales` de Supabase — la misma
 // base que ya usa esta página para los Excel subidos — para poder leerla
-// después desde otra página. A diferencia de supaReplaceRows() (que borra
-// e inserta), acá cada cierre se AGREGA: la tabla tiene que ir acumulando
-// una fila por cierre a lo largo del tiempo, no reemplazar la anterior. ──
+// después desde otra página (ver seguimiento.html). A diferencia de
+// supaReplaceRows() (que borra e inserta), acá cada cierre se AGREGA: la
+// tabla tiene que ir acumulando una fila por cierre a lo largo del tiempo,
+// no reemplazar la anterior. ─────────────────────────────────────────────
 function cerrarSemana(){
   const btn = document.getElementById('btn-cerrar-semana');
   const status = document.getElementById('cerrar-semana-status');
+  const notaInput = document.getElementById('cerrar-semana-nota');
   const setStatus = (msg, cls) => { if (status) { status.textContent = msg; status.className = 'cerrar-semana-status' + (cls ? ' ' + cls : ''); } };
 
   if (!_resumenSnapshot) {
@@ -643,9 +662,11 @@ function cerrarSemana(){
     return;
   }
 
+  const nota = (notaInput && notaInput.value.trim()) || null;
   const ahora = new Date();
   const filas = ['tfc', 'tf'].map(co => {
     const s = _resumenSnapshot[co];
+    const cf = getCashflowProyeccion(co);
     return {
       company: co,
       fecha: ahora.toISOString(),
@@ -660,6 +681,11 @@ function cerrarSemana(){
       disponible_modo_b: s.disponibleModoB,
       posicion_modo_a: s.posicionModoA,
       posicion_modo_b: s.posicionModoB,
+      disponible_operar: cf.disponibleOperar,
+      saldo_15d: cf.saldo15d,
+      saldo_30d: cf.saldo30d,
+      minimo_30d: cf.minimo30d,
+      nota,
     };
   });
 
@@ -670,6 +696,7 @@ function cerrarSemana(){
     .then(({ error }) => {
       if (error) throw error;
       setStatus('✓ Semana cerrada · ' + ahora.toLocaleDateString('es-AR') + ' ' + ahora.toLocaleTimeString('es-AR', {hour:'2-digit', minute:'2-digit'}), 'ok');
+      if (notaInput) notaInput.value = '';
     })
     .catch(err => {
       console.error('[Cerrar semana]', err);
