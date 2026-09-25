@@ -28,7 +28,6 @@
     </div>
     <div class="topbar-actions">
       <div class="export-bar">
-        <a class="btn-export" href="seguimiento.html">📈 Seguimiento</a>
         <button class="btn-export" onclick="openUploads()">⚙ Cargar archivos</button>
         <button class="btn-export btn-export-xls" onclick="exportExcel()">⬇ Excel</button>
         <button class="btn-export btn-export-pdf" onclick="exportPDF()">🖨 PDF</button>
@@ -361,9 +360,7 @@
       que guarda una foto de esos números (con fecha, y con nota opcional) en la tabla
       <code>cierres_semanales</code> de la base Supabase de esta página — la misma base
       que ya guarda los Excel subidos. No hace falta ningún paso manual: cada click
-      agrega una fila nueva por empresa (nunca reemplaza las anteriores). El botón
-      <strong>"📈 Seguimiento"</strong> de la topbar abre ese historial — evolución
-      semanal, apertura por concepto y el registro completo con la nota editable.</p>
+      agrega una fila nueva por empresa (nunca reemplaza las anteriores).</p>
 
       <h2>① Franja de KPIs (arriba de cada empresa)</h2>
       <p>Estos números vienen todos de la misma planilla: el Google Sheet <strong>"Reporte Tesorería"</strong> de cada empresa (uno para TF Carnes, otro para Trade Food — no es el mismo Sheet). Tiene una fila por banco y una fila "TOTAL".</p>
