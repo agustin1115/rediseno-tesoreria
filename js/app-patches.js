@@ -360,8 +360,8 @@ function renderResumen(){
   // Sheet la primera vez. Cobrar es la suma de Archivo A + Archivo B (es "lo
   // que falta cobrar en total"); Incobrables se muestra por archivo, igual
   // que TFcobranzas lo hace en su propia pantalla (dos números separados,
-  // "A resolver (excluido)" de Archivo A y de Archivo B) — el total de Modo
-  // A/B sigue restando la suma de los dos, solo cambia cómo se ve.
+  // "A resolver (excluido)" de Archivo A y de Archivo B) — a pedido tuyo,
+  // Incobrables SE SUMA al total de Modo A/B (no se resta).
   const cobTfc = _cobCache.tfc, cobTf = _cobCache.tf;
   const cobrarTfc = cobTfc ? cobTfc.totalCobrar : null;
   const cobrarTf  = cobTf  ? cobTf.totalCobrar  : null;
@@ -382,10 +382,10 @@ function renderResumen(){
   // Totales de LOS DOS modos, siempre (no solo el que está en pantalla) —
   // así "Cerrar semana" puede guardar todo sin importar qué pestaña tenías
   // abierta. Mismas fórmulas que abajo, un solo lugar donde calcularlas.
-  const totalATfc = (bancosTfc||0) + bavsaTfc - emitidosTfc - cpagarTfc + carteraTfc + (cobrarTfc||0) - movidasTfc - (incobrATfc||0);
-  const totalATf  = (bancosTf ||0) - emitidosTf  - cpagarTf  + carteraTf  + (cobrarTf ||0) - (incobrATf ||0);
-  const totalBTfc = (mbTotalTfc||0) - cpagarTfc + (cobrarTfc||0) - (incobrBTfc||0);
-  const totalBTf  = (mbTotalTf ||0) - cpagarTf  + (cobrarTf ||0) - (incobrBTf ||0);
+  const totalATfc = (bancosTfc||0) + bavsaTfc - emitidosTfc - cpagarTfc + carteraTfc + (cobrarTfc||0) - movidasTfc + (incobrATfc||0);
+  const totalATf  = (bancosTf ||0) - emitidosTf  - cpagarTf  + carteraTf  + (cobrarTf ||0) + (incobrATf ||0);
+  const totalBTfc = (mbTotalTfc||0) - cpagarTfc + (cobrarTfc||0) + (incobrBTfc||0);
+  const totalBTf  = (mbTotalTf ||0) - cpagarTf  + (cobrarTf ||0) + (incobrBTf ||0);
 
   // Foto de estos números para "Cerrar semana" (ver cerrarSemana() más abajo)
   // — se recalcula cada vez que corre renderResumen(), así siempre está al
@@ -418,8 +418,8 @@ function renderResumen(){
         <td class="rs-val rs-total tfc-col ${cls(totalATfc)}">${fmt(totalATfc)}</td>
         <td class="rs-val rs-total tf-col ${cls(totalATf)}">${fmt(totalATf)}</td>
       </tr>`;
-    footHtml = `Modo A = Bancos + BAVSA − Cheques emitidos − Cuentas a pagar + Cheques en cartera + Cobrar − Movidas (a Financiera) − Incobrables.
-      Cobrar suma Archivo A + Archivo B de TFcobranzas; Incobrables acá es solo Archivo A (el de Archivo B se usa en Modo B).
+    footHtml = `Modo A = Bancos + BAVSA − Cheques emitidos − Cuentas a pagar + Cheques en cartera + Cobrar − Movidas (a Financiera) + Incobrables.
+      Cobrar suma Archivo A + Archivo B de TFcobranzas; Incobrables acá es solo Archivo A (el de Archivo B se usa en Modo B) y SE SUMA (no se resta) al total.
       "Movidas" = Efectivo a entregar de Compromisos de Efectivo (solo TF Carnes). BAVSA es solo TF Carnes (Trade Food no tiene ese banco) —
       se sumó a pedido tuyo; antes de este agregado Modo A estaba confirmado contra tu ejemplo de referencia sin BAVSA.`;
   } else {
@@ -439,8 +439,8 @@ function renderResumen(){
         <td class="rs-val rs-total tfc-col ${cls(totalBTfc)}">${fmt(totalBTfc)}</td>
         <td class="rs-val rs-total tf-col ${cls(totalBTf)}">${fmt(totalBTf)}</td>
       </tr>`;
-    footHtml = `Modo B = Disponible (Modo B) − Cuentas a pagar + Cobrar − Incobrables.
-      Incobrables acá es solo Archivo B de TFcobranzas (el de Archivo A se usa en Modo A). Fórmula de Modo B sin confirmar contra un número de referencia — revisala.`;
+    footHtml = `Modo B = Disponible (Modo B) − Cuentas a pagar + Cobrar + Incobrables.
+      Incobrables acá es solo Archivo B de TFcobranzas (el de Archivo A se usa en Modo A) y SE SUMA (no se resta) al total. Fórmula de Modo B sin confirmar contra un número de referencia — revisala.`;
   }
 
   tableEl.innerHTML = `

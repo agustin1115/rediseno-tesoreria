@@ -432,8 +432,8 @@
       </table>
 
       <h2>⑤ Resumen de Posición — Modo A</h2>
-      <div class="leeme-flow">Bancos <span class="arrow">+</span> BAVSA <span class="arrow">−</span> Cheques emitidos <span class="arrow">−</span> Cuentas a pagar <span class="arrow">+</span> Cheques en cartera <span class="arrow">+</span> Cobrar <span class="arrow">−</span> Movidas <span class="arrow">−</span> Incobrables <span class="arrow">=</span> <b>Posición Modo A</b></div>
-      <p>La parte de Bancos/Cheques emitidos/Cuentas a pagar/Cheques en cartera/Cobrar/Incobrables está <strong>confirmada</strong> contra el ejemplo de referencia que me pasaste. "Movidas" se movió acá desde Modo B a pedido tuyo. "BAVSA" se sumó después, también a pedido tuyo — no formaba parte del ejemplo de referencia original.</p>
+      <div class="leeme-flow">Bancos <span class="arrow">+</span> BAVSA <span class="arrow">−</span> Cheques emitidos <span class="arrow">−</span> Cuentas a pagar <span class="arrow">+</span> Cheques en cartera <span class="arrow">+</span> Cobrar <span class="arrow">−</span> Movidas <span class="arrow">+</span> Incobrables <span class="arrow">=</span> <b>Posición Modo A</b></div>
+      <p>La parte de Bancos/Cheques emitidos/Cuentas a pagar/Cheques en cartera/Cobrar está <strong>confirmada</strong> contra el ejemplo de referencia que me pasaste. "Movidas" se movió acá desde Modo B a pedido tuyo. "BAVSA" se sumó después, también a pedido tuyo. <strong>Incobrables se suma</strong> al total (no se resta) — corregido a pedido tuyo, antes se restaba.</p>
       <table class="leeme-table">
         <thead><tr><th>Fila</th><th>De dónde sale</th></tr></thead>
         <tbody>
@@ -449,7 +449,7 @@
       </table>
 
       <h2>⑥ Resumen de Posición — Modo B</h2>
-      <div class="leeme-flow">Disponible (Modo B) <span class="arrow">−</span> Cuentas a pagar <span class="arrow">+</span> Cobrar <span class="arrow">−</span> Incobrables <span class="arrow">=</span> <b>Posición Modo B</b></div>
+      <div class="leeme-flow">Disponible (Modo B) <span class="arrow">−</span> Cuentas a pagar <span class="arrow">+</span> Cobrar <span class="arrow">+</span> Incobrables <span class="arrow">=</span> <b>Posición Modo B</b></div>
       <div class="leeme-warn"><strong>Ojo:</strong> a diferencia de Modo A, esta fórmula es una inferencia a partir de los nombres de fila del ejemplo de referencia que me pasaste — no hubo un número de posición final contra el cual confirmarla. Si el total no te cierra con lo que esperás, decímelo y la ajustamos.</div>
       <table class="leeme-table">
         <thead><tr><th>Fila</th><th>De dónde sale</th></tr></thead>
@@ -473,7 +473,7 @@
       <div class="leeme-flow">Sheet Archivo A <span class="arrow">+</span> Sheet Archivo B <span class="arrow">→</span> clasificar clientes (excluidos / difícil cobro / el resto) <span class="arrow">→</span> Cobrar + Incobrables</div>
       <ul>
         <li><strong>Cobrar</strong> (mismo número en Modo A y Modo B) = Total a cobrar de Archivo A <strong>+</strong> Total a cobrar de Archivo B, sumados. TFcobranzas los muestra por separado en su propia pantalla, nunca sumados — la suma acá es una decisión mía, para tener un solo número de "lo que falta cobrar"; si preferís otro criterio, decime.</li>
-        <li><strong>Incobrables NO se suma</strong>: el de <strong>Modo A</strong> es el "A resolver (excluido)" de <strong>Archivo A</strong> únicamente, y el de <strong>Modo B</strong> es el de <strong>Archivo B</strong> únicamente — son dos números distintos a propósito, cada uno en el modo que le corresponde.</li>
+        <li><strong>Incobrables de Archivo A y de Archivo B NO se combinan en un solo número</strong> (a diferencia de Cobrar): el de <strong>Modo A</strong> es el "A resolver (excluido)" de <strong>Archivo A</strong> únicamente, y el de <strong>Modo B</strong> es el de <strong>Archivo B</strong> únicamente — son dos números distintos a propósito, cada uno en el modo que le corresponde. Esto es independiente de que, dentro de cada modo, ese número se sume (no se reste) al total de Posición.</li>
         <li>Se actualiza solo cada 10 minutos (no hace falta más frecuencia para un Sheet que no cambia todo el tiempo) y muestra "—" mientras carga la primera vez después de abrir la página.</li>
       </ul>
       <p>Verificado corriendo el código real de TFcobranzas (<code>app.js</code>/<code>tfcarnes.js</code>) contra los Sheets en vivo y comparando los totales byte a byte contra lo que calcula esta página — coinciden exactos.</p>
