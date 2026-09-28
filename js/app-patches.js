@@ -405,7 +405,7 @@ function renderResumen(){
       ${row('Cheques en cartera', carteraTfc || null, carteraTf || null)}
       ${row('Cobrar', cobrarTfc, cobrarTf)}
       ${row('Movidas (a Financiera)', movidasTfc ? -movidasTfc : null, null)}
-      ${row('Incobrables', incobrATfc ? -incobrATfc : (incobrATfc===0?0:null), incobrATf ? -incobrATf : (incobrATf===0?0:null))}
+      ${row('Incobrables', incobrATfc, incobrATf)}
       <tr class="rs-total-row">
         <td class="rs-label rs-total">Posición Modo A</td>
         <td class="rs-val rs-total tfc-col ${cls(totalATfc)}">${fmt(totalATfc)}</td>
@@ -425,7 +425,7 @@ function renderResumen(){
       ${row('Disponible (Modo B)', mbTotalTfc || null, mbTotalTf || null)}
       ${row('Cuentas a pagar', cpagarTfc ? -cpagarTfc : null, cpagarTf ? -cpagarTf : null)}
       ${row('Cobrar', cobrarTfc, cobrarTf)}
-      ${row('Incobrables', incobrBTfc ? -incobrBTfc : (incobrBTfc===0?0:null), incobrBTf ? -incobrBTf : (incobrBTf===0?0:null))}
+      ${row('Incobrables', incobrBTfc, incobrBTf)}
       <tr class="rs-total-row">
         <td class="rs-label rs-total">Posición Modo B</td>
         <td class="rs-val rs-total tfc-col ${cls(totalBTfc)}">${fmt(totalBTfc)}</td>
