@@ -337,6 +337,12 @@ function renderResumen(){
   const bancosTfc = opTfc.saldo;
   const bancosTf  = st.tf.saldoBancos;
 
+  // BAVSA: solo TF Carnes (Trade Food no tiene ese banco). Se suma en Modo A
+  // a pedido tuyo — antes esta fórmula estaba confirmada contra tu ejemplo
+  // de referencia SIN BAVSA; con este agregado el total de Modo A en TF
+  // Carnes queda más alto que antes.
+  const bavsaTfc = opTfc.bavsa ? (opTfc.bavsa.saldo || 0) : 0;
+
   const carteraTfc = st.tfc.cartera || 0;
   const carteraTf  = st.tf.cartera  || 0;
 
@@ -376,7 +382,7 @@ function renderResumen(){
   // Totales de LOS DOS modos, siempre (no solo el que está en pantalla) —
   // así "Cerrar semana" puede guardar todo sin importar qué pestaña tenías
   // abierta. Mismas fórmulas que abajo, un solo lugar donde calcularlas.
-  const totalATfc = (bancosTfc||0) - emitidosTfc - cpagarTfc + carteraTfc + (cobrarTfc||0) - movidasTfc - (incobrATfc||0);
+  const totalATfc = (bancosTfc||0) + bavsaTfc - emitidosTfc - cpagarTfc + carteraTfc + (cobrarTfc||0) - movidasTfc - (incobrATfc||0);
   const totalATf  = (bancosTf ||0) - emitidosTf  - cpagarTf  + carteraTf  + (cobrarTf ||0) - (incobrATf ||0);
   const totalBTfc = (mbTotalTfc||0) - cpagarTfc + (cobrarTfc||0) - (incobrBTfc||0);
   const totalBTf  = (mbTotalTf ||0) - cpagarTf  + (cobrarTf ||0) - (incobrBTf ||0);
@@ -400,6 +406,7 @@ function renderResumen(){
     // "Movidas (a Financiera)" se movió acá desde Modo B.
     bodyHtml = `
       ${row('Bancos', bancosTfc, bancosTf)}
+      ${row('BAVSA', bavsaTfc || null, null)}
       ${row('Cheques emitidos', emitidosTfc ? -emitidosTfc : null, emitidosTf ? -emitidosTf : null)}
       ${row('Cuentas a pagar', cpagarTfc ? -cpagarTfc : null, cpagarTf ? -cpagarTf : null)}
       ${row('Cheques en cartera', carteraTfc || null, carteraTf || null)}
@@ -411,9 +418,10 @@ function renderResumen(){
         <td class="rs-val rs-total tfc-col ${cls(totalATfc)}">${fmt(totalATfc)}</td>
         <td class="rs-val rs-total tf-col ${cls(totalATf)}">${fmt(totalATf)}</td>
       </tr>`;
-    footHtml = `Modo A = Bancos − Cheques emitidos − Cuentas a pagar + Cheques en cartera + Cobrar − Movidas (a Financiera) − Incobrables.
+    footHtml = `Modo A = Bancos + BAVSA − Cheques emitidos − Cuentas a pagar + Cheques en cartera + Cobrar − Movidas (a Financiera) − Incobrables.
       Cobrar suma Archivo A + Archivo B de TFcobranzas; Incobrables acá es solo Archivo A (el de Archivo B se usa en Modo B).
-      "Movidas" = Efectivo a entregar de Compromisos de Efectivo (solo TF Carnes).`;
+      "Movidas" = Efectivo a entregar de Compromisos de Efectivo (solo TF Carnes). BAVSA es solo TF Carnes (Trade Food no tiene ese banco) —
+      se sumó a pedido tuyo; antes de este agregado Modo A estaba confirmado contra tu ejemplo de referencia sin BAVSA.`;
   } else {
     // Modo B: la "posición" parte de lo disponible en Modo B (caja), no del
     // saldo bancario — el resto de los ajustes es el mismo criterio que Modo A.
