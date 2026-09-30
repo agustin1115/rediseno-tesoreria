@@ -161,7 +161,12 @@ function cobClasificar(datosA, datosB){
   acc(datosA, 'A'); acc(datosB, 'B');
   return porCliente;
 }
-function cobTotales(datos, key, porCliente, esDificil){
+// restarAplicar: TF Carnes SÍ resta "a aplicar" (notas de crédito) de Total
+// a cobrar (tfcarnes.js); Trade Food NO la resta desde el cambio que
+// pediste en TFcobranzas (app.js: "Total a cobrar = solo debe, sin restar
+// a aplicar") — cobTotales() tiene que replicar esa diferencia por empresa,
+// si no el Cobrar de Trade Food queda descontado de más acá.
+function cobTotales(datos, key, porCliente, esDificil, restarAplicar){
   let dificilCobro = 0;
   datos.forEach(d => {
     const r = porCliente[d.cliente];
@@ -174,7 +179,7 @@ function cobTotales(datos, key, porCliente, esDificil){
     if ((r.debeA + r.debeB) <= 0 || esDificil(cliente)) return;
     const debe = key === 'A' ? r.debeA : r.debeB;
     const aplicar = key === 'A' ? r.aplicarA : r.aplicarB;
-    totalCobrar += debe - aplicar;
+    totalCobrar += restarAplicar ? (debe - aplicar) : debe;
   });
   return { totalCobrar, dificilCobro };
 }
@@ -250,12 +255,17 @@ const COB_TFC_EXCLUDED = new Set([
   'ETCHEVEHERE RURAL S. R. L.','HACIENDAS DEL NORTE','GLOBALWING','VILLAMAGNA HNOS SRL',
   'SENASA (FRIGO)','LUCANI S.R.L.','ORELLA S.R.L.','5L SA',
   'COMERCIALIZADORA DE CARNES ROMERO VACA S.A.','LA MERIDIONAL CIA ARG DE SEGUROS S A',
-  'MARCELO RAUL LAURO','NETLATIN S.R.L.','P & Z S.A.','SUMATIK SRL','MARIANO BLUMENFELD'
+  'MARCELO RAUL LAURO','NETLATIN S.R.L.','P & Z S.A.','SUMATIK SRL','MARIANO BLUMENFELD',
+  // Agregados después (copiados de tfcarnes.js) — no se toman en cuenta en ningún lado.
+  'CARNES VIREYES S.A','AUTOSERVICIO MAYORISTA DIARCO SA','FRIMARC - INDUSTIRA E COMERCIO, SA',
+  'OPEN ROUTE SAS','SUDAMBEEF TRADING S.A.','TIMBRO TRADING (AC COMERCIAL IMP E EXP LTDA)'
 ].map(s => s.trim().toUpperCase()));
 const COB_TFC_PARCIALES_EXCL = ['TARDITI','DELTACAR','CASNEM','GUIDO JORGE MU','ROBOL','RINALDI',
   'SODECAR','PAMPEANAS','ALBERDI','GANADERA GRANADA','ETCHEVEHERE','HACIENDAS DEL NORTE',
   'GLOBALWING','VILLAMAGNA','SENASA','LUCANI','ORELLA','ROMERO VACA','LA MERIDIONAL',
-  'MARCELO RAUL LAURO','NETLATIN','SUMATIK','BLUMENFELD'];
+  'MARCELO RAUL LAURO','NETLATIN','SUMATIK','BLUMENFELD',
+  // Red de contención para los 6 agregados arriba (variantes de tipeo/espaciado).
+  'VIREYES','DIARCO','FRIMARC','OPEN ROUTE','SUDAMBEEF','TIMBRO TRADING','AC COMERCIAL'];
 function cobTfcEsExcluido(name){
   if (!name || name === 'NaN') return true;
   const n = name.trim().toUpperCase();
@@ -289,8 +299,9 @@ async function cobFetchCompany(co){
   const datosA = cobProcessSheet(cobGvizToRows(gA), esExcluido);
   const datosB = cobProcessSheet(cobGvizToRows(gB), esExcluido);
   const porCliente = cobClasificar(datosA, datosB);
-  const rA = cobTotales(datosA, 'A', porCliente, esDificil);
-  const rB = cobTotales(datosB, 'B', porCliente, esDificil);
+  const restarAplicar = co === 'tfc'; // ver comentario en cobTotales()
+  const rA = cobTotales(datosA, 'A', porCliente, esDificil, restarAplicar);
+  const rB = cobTotales(datosB, 'B', porCliente, esDificil, restarAplicar);
   // totalCobrarA (Modo A) y totalCobrarB (Modo B) nunca se suman entre sí —
   // a pedido tuyo, mismo criterio que ya se aplicaba a Incobrables
   // (dificilCobroA/dificilCobroB).
