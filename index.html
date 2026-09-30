@@ -456,7 +456,7 @@
         <tbody>
           <tr><td>Disponible (Modo B)</td><td>Mismo número que "Total equiv. pesos" de la pestaña Modo B (④).</td></tr>
           <tr><td>Cuentas a pagar</td><td><strong>NO</strong> es el mismo archivo que en Modo A: acá es el "Total compromisos" de Modo B (Vencido+Próx.7+Próx.15+Más15 del Excel "Subir compromisos" de Modo B, ④) — mismo número que ves al lado de esos 4 buckets en la franja de Modo B.</td></tr>
-          <tr><td>Cobrar</td><td>De TFcobranzas — mismo número que Modo A.</td></tr>
+          <tr><td>Cobrar</td><td>De TFcobranzas, <strong>solo Archivo B</strong> — en Modo A, Cobrar suma Archivo A + Archivo B; acá (Modo B) es solo Archivo B, sin combinar.</td></tr>
           <tr><td>Incobrables</td><td>De TFcobranzas, <strong>solo Archivo B</strong> — distinto del Incobrables de Modo A, que usa Archivo A.</td></tr>
         </tbody>
       </table>
@@ -472,7 +472,7 @@
       coincidencia parcial para TF Carnes) — no es una fuente nueva ni distinta.</p>
       <div class="leeme-flow">Sheet Archivo A <span class="arrow">+</span> Sheet Archivo B <span class="arrow">→</span> clasificar clientes (excluidos / difícil cobro / el resto) <span class="arrow">→</span> Cobrar + Incobrables</div>
       <ul>
-        <li><strong>Cobrar</strong> (mismo número en Modo A y Modo B) = Total a cobrar de Archivo A <strong>+</strong> Total a cobrar de Archivo B, sumados. TFcobranzas los muestra por separado en su propia pantalla, nunca sumados — la suma acá es una decisión mía, para tener un solo número de "lo que falta cobrar"; si preferís otro criterio, decime.</li>
+        <li><strong>Cobrar en Modo A</strong> = Total a cobrar de Archivo A <strong>+</strong> Total a cobrar de Archivo B, sumados (TFcobranzas los muestra por separado en su propia pantalla, nunca sumados — la suma en Modo A es una decisión mía, para tener un solo número de "lo que falta cobrar"). <strong>Cobrar en Modo B</strong> = solo Total a cobrar de Archivo B, sin sumar Archivo A — son dos criterios distintos a propósito, uno por modo.</li>
         <li><strong>Incobrables de Archivo A y de Archivo B NO se combinan en un solo número</strong> (a diferencia de Cobrar): el de <strong>Modo A</strong> es el "A resolver (excluido)" de <strong>Archivo A</strong> únicamente, y el de <strong>Modo B</strong> es el de <strong>Archivo B</strong> únicamente — son dos números distintos a propósito, cada uno en el modo que le corresponde. Esto es independiente de que, dentro de cada modo, ese número se sume (no se reste) al total de Posición.</li>
         <li>Se actualiza solo cada 10 minutos (no hace falta más frecuencia para un Sheet que no cambia todo el tiempo) y muestra "—" mientras carga la primera vez después de abrir la página.</li>
       </ul>

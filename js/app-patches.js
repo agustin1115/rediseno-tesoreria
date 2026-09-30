@@ -291,11 +291,15 @@ async function cobFetchCompany(co){
   const porCliente = cobClasificar(datosA, datosB);
   const rA = cobTotales(datosA, 'A', porCliente, esDificil);
   const rB = cobTotales(datosB, 'B', porCliente, esDificil);
-  // Cobrar SÍ se suma (es "lo que falta cobrar en total"), pero Incobrables se
-  // deja por archivo — TFcobranzas muestra "A resolver (excluido)" de Archivo A
-  // y de Archivo B como dos números separados, nunca sumados, así que el
-  // Resumen de Posición respeta esa misma separación en vez de mezclarlos.
-  return { totalCobrar: rA.totalCobrar + rB.totalCobrar, dificilCobroA: rA.dificilCobro, dificilCobroB: rB.dificilCobro };
+  // totalCobrar (combinado A+B) se usa en Modo A; totalCobrarB (solo Archivo
+  // B) se usa en Modo B, a pedido tuyo — mismo criterio que ya se aplicaba a
+  // Incobrables (dificilCobroA/dificilCobroB, nunca sumados entre sí).
+  return {
+    totalCobrar: rA.totalCobrar + rB.totalCobrar,
+    totalCobrarB: rB.totalCobrar,
+    dificilCobroA: rA.dificilCobro,
+    dificilCobroB: rB.dificilCobro,
+  };
 }
 async function cobRefresh(){
   try {
@@ -371,14 +375,17 @@ function renderResumen(){
   const mbTotalTf  = (st.tf.modoB.pesos ||0) + (st.tf.modoB.cheques ||0) + (cotizTf  ? (st.tf.modoB.dolares ||0)*cotizTf  : 0);
 
   // Cobrar / Incobrables: de TFcobranzas. "—" mientras se está leyendo el
-  // Sheet la primera vez. Cobrar es la suma de Archivo A + Archivo B (es "lo
-  // que falta cobrar en total"); Incobrables se muestra por archivo, igual
-  // que TFcobranzas lo hace en su propia pantalla (dos números separados,
-  // "A resolver (excluido)" de Archivo A y de Archivo B) — a pedido tuyo,
-  // Incobrables SE SUMA al total de Modo A/B (no se resta).
+  // Sheet la primera vez. En Modo A, Cobrar es la suma de Archivo A + Archivo
+  // B (es "lo que falta cobrar en total"); en Modo B, Cobrar es SOLO Archivo
+  // B (a pedido tuyo, mismo criterio que ya se usaba para Incobrables: dos
+  // números separados por archivo, "A resolver (excluido)" de Archivo A y de
+  // Archivo B, nunca sumados entre sí) — Incobrables SE SUMA al total de
+  // Modo A/B (no se resta).
   const cobTfc = _cobCache.tfc, cobTf = _cobCache.tf;
   const cobrarTfc = cobTfc ? cobTfc.totalCobrar : null;
   const cobrarTf  = cobTf  ? cobTf.totalCobrar  : null;
+  const cobrarBTfc = cobTfc ? cobTfc.totalCobrarB : null;
+  const cobrarBTf  = cobTf  ? cobTf.totalCobrarB  : null;
   const incobrATfc = cobTfc ? cobTfc.dificilCobroA : null;
   const incobrBTfc = cobTfc ? cobTfc.dificilCobroB : null;
   const incobrATf  = cobTf  ? cobTf.dificilCobroA  : null;
@@ -398,8 +405,8 @@ function renderResumen(){
   // abierta. Mismas fórmulas que abajo, un solo lugar donde calcularlas.
   const totalATfc = (bancosTfc||0) + bavsaTfc - emitidosTfc - cpagarTfc + carteraTfc + (cobrarTfc||0) - movidasTfc + (incobrATfc||0);
   const totalATf  = (bancosTf ||0) - emitidosTf  - cpagarTf  + carteraTf  + (cobrarTf ||0) + (incobrATf ||0);
-  const totalBTfc = (mbTotalTfc||0) - compromisosBTfc + (cobrarTfc||0) + (incobrBTfc||0);
-  const totalBTf  = (mbTotalTf ||0) - compromisosBTf  + (cobrarTf ||0) + (incobrBTf ||0);
+  const totalBTfc = (mbTotalTfc||0) - compromisosBTfc + (cobrarBTfc||0) + (incobrBTfc||0);
+  const totalBTf  = (mbTotalTf ||0) - compromisosBTf  + (cobrarBTf ||0) + (incobrBTf ||0);
 
   // Foto de estos números para "Cerrar semana" (ver cerrarSemana() más abajo)
   // — se recalcula cada vez que corre renderResumen(), así siempre está al
@@ -439,14 +446,15 @@ function renderResumen(){
   } else {
     // Modo B: la "posición" parte de lo disponible en Modo B (caja), no del
     // saldo bancario — el resto de los ajustes es el mismo criterio que Modo A.
-    // Incobrables en Modo B = solo Archivo B de TFcobranzas.
+    // Cobrar e Incobrables en Modo B = solo Archivo B de TFcobranzas (no
+    // sumado con Archivo A, a diferencia de Modo A donde Cobrar sí suma los dos).
     // NOTA: esta fórmula de Modo B es una inferencia mía a partir del ejemplo
     // que pasaste (no la confirmé contra un número de referencia como sí hice
     // con Modo A) — avisame si el total no coincide con lo que esperás.
     bodyHtml = `
       ${row('Disponible (Modo B)', mbTotalTfc || null, mbTotalTf || null)}
       ${row('Cuentas a pagar', compromisosBTfc ? -compromisosBTfc : null, compromisosBTf ? -compromisosBTf : null)}
-      ${row('Cobrar', cobrarTfc, cobrarTf)}
+      ${row('Cobrar', cobrarBTfc, cobrarBTf)}
       ${row('Incobrables', incobrBTfc, incobrBTf)}
       <tr class="rs-total-row">
         <td class="rs-label rs-total">Posición Modo B</td>
@@ -454,9 +462,10 @@ function renderResumen(){
         <td class="rs-val rs-total tf-col ${cls(totalBTf)}">${fmt(totalBTf)}</td>
       </tr>`;
     footHtml = `Modo B = Disponible (Modo B) − Cuentas a pagar + Cobrar + Incobrables.
-      Incobrables acá es solo Archivo B de TFcobranzas (el de Archivo A se usa en Modo A) y SE SUMA (no se resta) al total. "Cuentas a pagar" acá
-      es el Total compromisos de Modo B (Vencido+Próx.7+Próx.15+Más15 del Excel "Subir compromisos" de Modo B) — no el mismo archivo de Cuentas a
-      pagar que usa Modo A, a pedido tuyo. Fórmula de Modo B sin confirmar contra un número de referencia — revisala.`;
+      Acá "Cobrar" e "Incobrables" son solo Archivo B de TFcobranzas (en Modo A, Cobrar suma Archivo A + Archivo B; Incobrables usa solo Archivo A) —
+      a pedido tuyo, ninguno de los dos se suma entre archivos acá. "Cuentas a pagar" acá es el Total compromisos de Modo B
+      (Vencido+Próx.7+Próx.15+Más15 del Excel "Subir compromisos" de Modo B) — no el mismo archivo de Cuentas a pagar que usa Modo A.
+      Fórmula de Modo B sin confirmar contra un número de referencia — revisala.`;
   }
 
   tableEl.innerHTML = `
