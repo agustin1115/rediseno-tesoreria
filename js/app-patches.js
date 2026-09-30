@@ -30,6 +30,26 @@ function setModoBCotizacion(co, value){
   if (el && _mbCotiz[co]) el.value = _mbCotiz[co];
 });
 
+// "Total compromisos" de Modo B: Vencido+Próx.7+Próx.15+Más15 de los
+// compromisos subidos en "Subir compromisos" de Modo B (st[co].modoB.provRaw)
+// — un archivo distinto de "Cuentas a pagar" (st[co].provRaw). Se usa tanto
+// en la franja de Modo B (mb-kpi-*-total-venc) como en la fila "Cuentas a
+// pagar" del Resumen de Posición cuando está en Modo B (ver renderResumen).
+function getModoBTotalCompromisos(co){
+  const today = new Date(); today.setHours(0,0,0,0);
+  const prov = st[co].modoB.provRaw || [];
+  let vencido=0, d7=0, d15=0, d15plus=0;
+  for (const r of prov) {
+    const dias = r.fecha ? Math.round((r.fecha - today) / 86400000) : null;
+    if (dias === null) continue;
+    if (dias < 0) vencido += r.monto;
+    else if (dias <= 7) d7 += r.monto;
+    else if (dias <= 15) d15 += r.monto;
+    else d15plus += r.monto;
+  }
+  return vencido + d7 + d15 + d15plus;
+}
+
 // ── Extiende renderModoB(): "Total equiv. pesos" (con USD convertidos si hay
 // cotización cargada) y "Total compromisos" (= Vencido+Próx.7+Próx.15+Más15,
 // mismos 4 buckets que ya calcula el renderModoB original, para que sume
@@ -56,19 +76,7 @@ function renderModoBExtra(co){
     }
   }
 
-  // Total compromisos: misma cuenta que los 4 buckets de al lado (Vencido/7/15/Más15).
-  const today = new Date(); today.setHours(0,0,0,0);
-  const prov = mb.provRaw || [];
-  let vencido=0, d7=0, d15=0, d15plus=0;
-  for (const r of prov) {
-    const dias = r.fecha ? Math.round((r.fecha - today) / 86400000) : null;
-    if (dias === null) continue;
-    if (dias < 0) vencido += r.monto;
-    else if (dias <= 7) d7 += r.monto;
-    else if (dias <= 15) d15 += r.monto;
-    else d15plus += r.monto;
-  }
-  const totalComp = vencido + d7 + d15 + d15plus;
+  const totalComp = getModoBTotalCompromisos(co);
   const elTV = document.getElementById(`mb-kpi-${co}-total-venc`);
   if (elTV) elTV.textContent = totalComp > 0 ? fN(totalComp) : '—';
 }
@@ -352,6 +360,12 @@ function renderResumen(){
   const cpagarTfc = getProv('tfc').reduce((s,r)=>s+r.monto,0);
   const cpagarTf  = getProv('tf').reduce((s,r)=>s+r.monto,0);
 
+  // Modo B usa "Total compromisos" (Vencido+7+15+Más15 de Modo B) en la fila
+  // "Cuentas a pagar" en vez del cpagarTfc/cpagarTf de arriba — son fuentes
+  // distintas (Modo B tiene su propio Excel "Subir compromisos"), a pedido tuyo.
+  const compromisosBTfc = getModoBTotalCompromisos('tfc');
+  const compromisosBTf  = getModoBTotalCompromisos('tf');
+
   const cotizTfc = _mbCotiz.tfc, cotizTf = _mbCotiz.tf;
   const mbTotalTfc = (st.tfc.modoB.pesos||0) + (st.tfc.modoB.cheques||0) + (cotizTfc ? (st.tfc.modoB.dolares||0)*cotizTfc : 0);
   const mbTotalTf  = (st.tf.modoB.pesos ||0) + (st.tf.modoB.cheques ||0) + (cotizTf  ? (st.tf.modoB.dolares ||0)*cotizTf  : 0);
@@ -384,8 +398,8 @@ function renderResumen(){
   // abierta. Mismas fórmulas que abajo, un solo lugar donde calcularlas.
   const totalATfc = (bancosTfc||0) + bavsaTfc - emitidosTfc - cpagarTfc + carteraTfc + (cobrarTfc||0) - movidasTfc + (incobrATfc||0);
   const totalATf  = (bancosTf ||0) - emitidosTf  - cpagarTf  + carteraTf  + (cobrarTf ||0) + (incobrATf ||0);
-  const totalBTfc = (mbTotalTfc||0) - cpagarTfc + (cobrarTfc||0) + (incobrBTfc||0);
-  const totalBTf  = (mbTotalTf ||0) - cpagarTf  + (cobrarTf ||0) + (incobrBTf ||0);
+  const totalBTfc = (mbTotalTfc||0) - compromisosBTfc + (cobrarTfc||0) + (incobrBTfc||0);
+  const totalBTf  = (mbTotalTf ||0) - compromisosBTf  + (cobrarTf ||0) + (incobrBTf ||0);
 
   // Foto de estos números para "Cerrar semana" (ver cerrarSemana() más abajo)
   // — se recalcula cada vez que corre renderResumen(), así siempre está al
@@ -431,7 +445,7 @@ function renderResumen(){
     // con Modo A) — avisame si el total no coincide con lo que esperás.
     bodyHtml = `
       ${row('Disponible (Modo B)', mbTotalTfc || null, mbTotalTf || null)}
-      ${row('Cuentas a pagar', cpagarTfc ? -cpagarTfc : null, cpagarTf ? -cpagarTf : null)}
+      ${row('Cuentas a pagar', compromisosBTfc ? -compromisosBTfc : null, compromisosBTf ? -compromisosBTf : null)}
       ${row('Cobrar', cobrarTfc, cobrarTf)}
       ${row('Incobrables', incobrBTfc, incobrBTf)}
       <tr class="rs-total-row">
@@ -440,7 +454,9 @@ function renderResumen(){
         <td class="rs-val rs-total tf-col ${cls(totalBTf)}">${fmt(totalBTf)}</td>
       </tr>`;
     footHtml = `Modo B = Disponible (Modo B) − Cuentas a pagar + Cobrar + Incobrables.
-      Incobrables acá es solo Archivo B de TFcobranzas (el de Archivo A se usa en Modo A) y SE SUMA (no se resta) al total. Fórmula de Modo B sin confirmar contra un número de referencia — revisala.`;
+      Incobrables acá es solo Archivo B de TFcobranzas (el de Archivo A se usa en Modo A) y SE SUMA (no se resta) al total. "Cuentas a pagar" acá
+      es el Total compromisos de Modo B (Vencido+Próx.7+Próx.15+Más15 del Excel "Subir compromisos" de Modo B) — no el mismo archivo de Cuentas a
+      pagar que usa Modo A, a pedido tuyo. Fórmula de Modo B sin confirmar contra un número de referencia — revisala.`;
   }
 
   tableEl.innerHTML = `
