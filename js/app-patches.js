@@ -437,7 +437,7 @@ function renderResumen(){
   const totalBTfc = (mbTotalTfc||0) - compromisosBTfc + (cobrarBTfc||0) - movidasTfc + (incobrBTfc||0) * incobrablesFactorB;
   const totalBTf  = (mbTotalTf ||0) - compromisosBTf  + (cobrarBTf ||0) + (incobrBTf ||0) * incobrablesFactorB;
   const totalATfc = (bancosTfc||0) + bavsaTfc - emitidosTfc - cpagarTfc + carteraTfc + (cobrarATfc||0) + (incobrATfc||0) * incobrablesFactorA + totalBTfc;
-  const totalATf  = (bancosTf ||0) - emitidosTf  - cpagarTf  + carteraTf  + (cobrarATf ||0) + (incobrATf ||0) * incobrablesFactorA + totalBTf;
+  const totalATf  = (bancosTf ||0) - emitidosTf  - cpagarTf  + carteraTf  + (cobrarATf ||0) + (incobrATf ||0) * incobrablesFactorA;
 
   // Foto de estos números para "Cerrar semana" (ver cerrarSemana() más abajo)
   // — se recalcula cada vez que corre renderResumen(), así siempre está al
@@ -482,18 +482,18 @@ function renderResumen(){
       <tr class="rs-ref-row">
         <td class="rs-label">Posición Modo B</td>
         <td class="rs-val tfc-col ${cls(totalBTfc)}">${fmt(totalBTfc)}</td>
-        <td class="rs-val tf-col ${cls(totalBTf)}">${fmt(totalBTf)}</td>
+        <td class="rs-val tf-col">—</td>
       </tr>
       <tr class="rs-total-row">
         <td class="rs-label rs-total">Posición Modo A</td>
         <td class="rs-val rs-total tfc-col ${cls(totalATfc)}">${fmt(totalATfc)}</td>
         <td class="rs-val rs-total tf-col ${cls(totalATf)}">${fmt(totalATf)}</td>
       </tr>`;
-    footHtml = `Modo A = Bancos + BAVSA − Cheques emitidos − Cuentas a pagar + Cheques en cartera + Cobrar + Incobrables + Posición Modo B.
-      Acá "Cobrar" e "Incobrables" son solo Archivo A de TFcobranzas (en Modo B, ambos son solo Archivo B) — a pedido tuyo, nunca sumados entre
-      archivos. Tocá el nombre "Incobrables" para activarlo/desactivarlo del total. "Posición Modo B" se suma tal cual da (puede ser negativo,
-      en cuyo caso resta) — a pedido tuyo. BAVSA es solo TF Carnes (Trade Food no tiene ese banco).
-      "Movidas (a Financiera)" ya no está acá — se movió a Modo B.`;
+    footHtml = `Modo A (TF Carnes) = Bancos + BAVSA − Cheques emitidos − Cuentas a pagar + Cheques en cartera + Cobrar + Incobrables + Posición Modo B.
+      Modo A (Trade Food) = Bancos − Cheques emitidos − Cuentas a pagar + Cheques en cartera + Cobrar + Incobrables (sin BAVSA ni Posición Modo B,
+      que son solo TF Carnes). Acá "Cobrar" e "Incobrables" son solo Archivo A de TFcobranzas (en Modo B, ambos son solo Archivo B) — a pedido
+      tuyo, nunca sumados entre archivos. Tocá el nombre "Incobrables" para activarlo/desactivarlo del total. "Posición Modo B" se suma tal cual
+      da (puede ser negativo, en cuyo caso resta) — a pedido tuyo. "Movidas (a Financiera)" ya no está acá — se movió a Modo B.`;
   } else {
     // Modo B: la "posición" parte de lo disponible en Modo B (caja), no del
     // saldo bancario — el resto de los ajustes es el mismo criterio que Modo A.
