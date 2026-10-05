@@ -341,6 +341,17 @@ function switchResumenModo(modo){
   renderResumen();
 }
 
+// Activar/desactivar Incobrables del total de Posición — a pedido tuyo, se
+// toca el nombre de la fila. Un toggle por modo (A y B son archivos
+// distintos de TFcobranzas, independientes entre sí). No se guarda en
+// localStorage a propósito: arranca siempre activado en cada carga, para
+// no dejar un número "raro" guardado sin querer de una sesión anterior.
+let _incobrablesOn = { a: true, b: true };
+function toggleIncobrables(modo){
+  _incobrablesOn[modo] = !_incobrablesOn[modo];
+  renderResumen();
+}
+
 function renderResumen(){
   const tableEl = document.getElementById('resumen-table');
   if (!tableEl) return;
@@ -401,26 +412,39 @@ function renderResumen(){
   const incobrATf  = cobTf  ? cobTf.dificilCobroA  : null;
   const incobrBTf  = cobTf  ? cobTf.dificilCobroB  : null;
 
-  // Movidas (Modo B): lo que ya se giró a Financiera, = "Efectivo a entregar"
-  // de Compromisos de Efectivo (mismo cálculo que arma finkpi-efec en
-  // renderFinanciera(): compromisos activos, sin contar los ya marcados como
-  // pagados — _finPagados/compromisos son variables de app.js, visibles acá
-  // porque los <script> clásicos comparten el mismo scope de nivel superior).
-  // Solo existe para TFC; Trade Food no tiene panel de Financiera → "—".
+  // Movidas (a Financiera): lo que ya se giró a Financiera, = "Efectivo a
+  // entregar" de Compromisos de Efectivo (mismo cálculo que arma finkpi-efec
+  // en renderFinanciera(): compromisos activos, sin contar los ya marcados
+  // como pagados — _finPagados/compromisos son variables de app.js, visibles
+  // acá porque los <script> clásicos comparten el mismo scope de nivel
+  // superior). Solo existe para TFC; Trade Food no tiene panel de Financiera
+  // → "—". Vive en Modo B (a pedido tuyo — antes estuvo en Modo A).
   const activosTfc = (st.tfc.compromisos || []).filter(c => !_finPagados.has(c.id));
   const movidasTfc = activosTfc.reduce((s,c) => s + c.importeEfectivo, 0);
+
+  // Incobrables se puede activar/desactivar tocando el nombre de la fila
+  // (toggleIncobrables) — cuando está desactivado, no entra en el total
+  // (factor 0) pero el número sigue mostrándose, tachado, para que quede
+  // claro qué se está dejando afuera.
+  const incobrablesFactorA = _incobrablesOn.a ? 1 : 0;
+  const incobrablesFactorB = _incobrablesOn.b ? 1 : 0;
 
   // Totales de LOS DOS modos, siempre (no solo el que está en pantalla) —
   // así "Cerrar semana" puede guardar todo sin importar qué pestaña tenías
   // abierta. Mismas fórmulas que abajo, un solo lugar donde calcularlas.
-  const totalATfc = (bancosTfc||0) + bavsaTfc - emitidosTfc - cpagarTfc + carteraTfc + (cobrarATfc||0) - movidasTfc + (incobrATfc||0);
-  const totalATf  = (bancosTf ||0) - emitidosTf  - cpagarTf  + carteraTf  + (cobrarATf ||0) + (incobrATf ||0);
-  const totalBTfc = (mbTotalTfc||0) - compromisosBTfc + (cobrarBTfc||0) + (incobrBTfc||0);
-  const totalBTf  = (mbTotalTf ||0) - compromisosBTf  + (cobrarBTf ||0) + (incobrBTf ||0);
+  // Modo B se calcula PRIMERO porque Modo A lo incorpora como un renglón más
+  // (ver abajo) — Modo B no depende de Modo A, así que no hay circularidad.
+  const totalBTfc = (mbTotalTfc||0) - compromisosBTfc + (cobrarBTfc||0) - movidasTfc + (incobrBTfc||0) * incobrablesFactorB;
+  const totalBTf  = (mbTotalTf ||0) - compromisosBTf  + (cobrarBTf ||0) + (incobrBTf ||0) * incobrablesFactorB;
+  const totalATfc = (bancosTfc||0) + bavsaTfc - emitidosTfc - cpagarTfc + carteraTfc + (cobrarATfc||0) + (incobrATfc||0) * incobrablesFactorA + totalBTfc;
+  const totalATf  = (bancosTf ||0) - emitidosTf  - cpagarTf  + carteraTf  + (cobrarATf ||0) + (incobrATf ||0) * incobrablesFactorA + totalBTf;
 
   // Foto de estos números para "Cerrar semana" (ver cerrarSemana() más abajo)
   // — se recalcula cada vez que corre renderResumen(), así siempre está al
-  // día con lo último cargado.
+  // día con lo último cargado. incobrablesA/incobrablesB quedan con el valor
+  // REAL (sin aplicar el toggle) para no ensuciar el histórico de "Apertura
+  // por concepto"; posicionModoA/posicionModoB sí reflejan el toggle, porque
+  // son "la posición tal cual la cerraste".
   _resumenSnapshot = {
     tfc: { bancos: bancosTfc, chequesEmitidos: emitidosTfc, cuentasAPagar: cpagarTfc, chequesEnCartera: carteraTfc,
            cobrar: cobrarATfc, movidas: movidasTfc, incobrablesA: incobrATfc, incobrablesB: incobrBTfc,
@@ -430,11 +454,23 @@ function renderResumen(){
            disponibleModoB: mbTotalTf, posicionModoA: totalATf, posicionModoB: totalBTf },
   };
 
+  // Fila "Incobrables" clickeable (tocar el nombre activa/desactiva su efecto
+  // en el total de ese modo) — reemplaza el row() genérico solo para esta fila.
+  const incobrablesRow = (modo, vTfc, vTf) => {
+    const on = _incobrablesOn[modo];
+    return `<tr class="${on ? '' : 'rs-row-off'}">
+      <td class="rs-label rs-label-toggle" onclick="toggleIncobrables('${modo}')" title="Tocar para ${on ? 'desactivar' : 'activar'} Incobrables en el total">Incobrables</td>
+      <td class="rs-val tfc-col ${cls(vTfc)}">${fmt(vTfc)}</td>
+      <td class="rs-val tf-col ${cls(vTf)}">${fmt(vTf)}</td>
+    </tr>`;
+  };
+
   let bodyHtml, footHtml;
 
   if (_resumenModo === 'a') {
     // Cobrar e Incobrables en Modo A = solo Archivo A de TFcobranzas (no se
-    // suman con Archivo B). "Movidas (a Financiera)" se movió acá desde Modo B.
+    // suman con Archivo B). "Posición Modo B" entra acá como un renglón más
+    // (suma o resta según su propio signo) — a pedido tuyo.
     bodyHtml = `
       ${row('Bancos', bancosTfc, bancosTf)}
       ${row('BAVSA', bavsaTfc || null, null)}
@@ -442,23 +478,28 @@ function renderResumen(){
       ${row('Cuentas a pagar', cpagarTfc ? -cpagarTfc : null, cpagarTf ? -cpagarTf : null)}
       ${row('Cheques en cartera', carteraTfc || null, carteraTf || null)}
       ${row('Cobrar', cobrarATfc, cobrarATf)}
-      ${row('Movidas (a Financiera)', movidasTfc ? -movidasTfc : null, null)}
-      ${row('Incobrables', incobrATfc, incobrATf)}
+      ${incobrablesRow('a', incobrATfc, incobrATf)}
+      <tr class="rs-ref-row">
+        <td class="rs-label">Posición Modo B</td>
+        <td class="rs-val tfc-col ${cls(totalBTfc)}">${fmt(totalBTfc)}</td>
+        <td class="rs-val tf-col ${cls(totalBTf)}">${fmt(totalBTf)}</td>
+      </tr>
       <tr class="rs-total-row">
         <td class="rs-label rs-total">Posición Modo A</td>
         <td class="rs-val rs-total tfc-col ${cls(totalATfc)}">${fmt(totalATfc)}</td>
         <td class="rs-val rs-total tf-col ${cls(totalATf)}">${fmt(totalATf)}</td>
       </tr>`;
-    footHtml = `Modo A = Bancos + BAVSA − Cheques emitidos − Cuentas a pagar + Cheques en cartera + Cobrar − Movidas (a Financiera) + Incobrables.
+    footHtml = `Modo A = Bancos + BAVSA − Cheques emitidos − Cuentas a pagar + Cheques en cartera + Cobrar + Incobrables + Posición Modo B.
       Acá "Cobrar" e "Incobrables" son solo Archivo A de TFcobranzas (en Modo B, ambos son solo Archivo B) — a pedido tuyo, nunca sumados entre
-      archivos. Incobrables SE SUMA (no se resta) al total. "Movidas" = Efectivo a entregar de Compromisos de Efectivo (solo TF Carnes).
-      BAVSA es solo TF Carnes (Trade Food no tiene ese banco) — se sumó a pedido tuyo; antes de este agregado Modo A estaba confirmado contra
-      tu ejemplo de referencia (que tampoco incluía separar Cobrar por archivo, eso se ajustó después).`;
+      archivos. Tocá el nombre "Incobrables" para activarlo/desactivarlo del total. "Posición Modo B" se suma tal cual da (puede ser negativo,
+      en cuyo caso resta) — a pedido tuyo. BAVSA es solo TF Carnes (Trade Food no tiene ese banco).
+      "Movidas (a Financiera)" ya no está acá — se movió a Modo B.`;
   } else {
     // Modo B: la "posición" parte de lo disponible en Modo B (caja), no del
     // saldo bancario — el resto de los ajustes es el mismo criterio que Modo A.
     // Cobrar e Incobrables en Modo B = solo Archivo B de TFcobranzas (no
-    // sumado con Archivo A, a diferencia de Modo A donde Cobrar sí suma los dos).
+    // sumado con Archivo A). "Movidas (a Financiera)" vive acá (antes estaba
+    // en Modo A) — a pedido tuyo.
     // NOTA: esta fórmula de Modo B es una inferencia mía a partir del ejemplo
     // que pasaste (no la confirmé contra un número de referencia como sí hice
     // con Modo A) — avisame si el total no coincide con lo que esperás.
@@ -466,16 +507,19 @@ function renderResumen(){
       ${row('Disponible (Modo B)', mbTotalTfc || null, mbTotalTf || null)}
       ${row('Cuentas a pagar', compromisosBTfc ? -compromisosBTfc : null, compromisosBTf ? -compromisosBTf : null)}
       ${row('Cobrar', cobrarBTfc, cobrarBTf)}
-      ${row('Incobrables', incobrBTfc, incobrBTf)}
+      ${row('Movidas (a Financiera)', movidasTfc ? -movidasTfc : null, null)}
+      ${incobrablesRow('b', incobrBTfc, incobrBTf)}
       <tr class="rs-total-row">
         <td class="rs-label rs-total">Posición Modo B</td>
         <td class="rs-val rs-total tfc-col ${cls(totalBTfc)}">${fmt(totalBTfc)}</td>
         <td class="rs-val rs-total tf-col ${cls(totalBTf)}">${fmt(totalBTf)}</td>
       </tr>`;
-    footHtml = `Modo B = Disponible (Modo B) − Cuentas a pagar + Cobrar + Incobrables.
+    footHtml = `Modo B = Disponible (Modo B) − Cuentas a pagar + Cobrar − Movidas (a Financiera) + Incobrables.
       Acá "Cobrar" e "Incobrables" son solo Archivo B de TFcobranzas (en Modo A, ambos son solo Archivo A) — a pedido tuyo, ninguno de los dos
-      se suma entre archivos. "Cuentas a pagar" acá es el Total compromisos de Modo B (Vencido+Próx.7+Próx.15+Más15 del Excel "Subir compromisos"
-      de Modo B) — no el mismo archivo de Cuentas a pagar que usa Modo A. Fórmula de Modo B sin confirmar contra un número de referencia — revisala.`;
+      se suma entre archivos. Tocá el nombre "Incobrables" para activarlo/desactivarlo del total. "Cuentas a pagar" acá es el Total compromisos
+      de Modo B (Vencido+Próx.7+Próx.15+Más15 del Excel "Subir compromisos" de Modo B) — no el mismo archivo de Cuentas a pagar que usa Modo A.
+      Este total de Modo B es el que se suma/resta como "Posición Modo B" dentro de Modo A. Fórmula sin confirmar contra un número de
+      referencia — revisala.`;
   }
 
   tableEl.innerHTML = `
