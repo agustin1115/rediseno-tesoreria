@@ -377,8 +377,12 @@ function renderResumen(){
   // Carnes queda más alto que antes.
   const bavsaTfc = opTfc.bavsa ? (opTfc.bavsa.saldo || 0) : 0;
 
-  const carteraTfc = st.tfc.cartera || 0;
-  const carteraTf  = st.tf.cartera  || 0;
+  // getCarteraTotal() recalcula en vivo descontando los cheques adjudicados
+  // (excl[co].chq) — antes acá se usaba st[co].cartera, que es la suma
+  // cruda de cuando subiste el archivo y no se actualizaba al adjudicar un
+  // cheque (por eso "Cheques en cartera" no cambiaba ni con "↺ Actualizar").
+  const carteraTfc = getCarteraTotal('tfc');
+  const carteraTf  = getCarteraTotal('tf');
 
   const emitidosTfc = (st.tfc.chequesEmitidos||[]).reduce((s,c)=>s+c.importe,0);
   const emitidosTf  = (st.tf.chequesEmitidos ||[]).reduce((s,c)=>s+c.importe,0);
@@ -591,6 +595,23 @@ function getDisponibleDetalle(co){
   if (desc   != null) rows.push({ cliente: 'Acuerdos descubierto', razon: '', filas: 1, importe: desc });
   return rows;
 }
+// Total de Cartera de cheques EN VIVO, descontando los que marcaste como
+// adjudicados/excluidos (excl[co].chq) — a diferencia de st[co].cartera,
+// que es la suma cruda calculada una sola vez al subir el archivo y nunca
+// se actualiza al adjudicar un cheque. Mismo criterio de exclusión que ya
+// usa getCarteraDetalle() y la tarjeta KPI "Cartera cheques" de app.js.
+function getCarteraTotal(co){
+  let total = 0;
+  (st[co].carteraChqs || []).forEach(r => {
+    const id = chqStableId(co, 'e', r.numero, r.importe || 0);
+    if (!excl[co].chq.has(id)) total += r.importe || 0;
+  });
+  (st[co].chequesFisicos || []).forEach(r => {
+    const id = chqStableId(co, 'f', r.numero, r.importe || 0);
+    if (!excl[co].chq.has(id)) total += r.importe || 0;
+  });
+  return total;
+}
 function getCarteraDetalle(co){
   const map = new Map();
   function add(cliente, importe){
@@ -619,7 +640,7 @@ function getBavsaDetalle(co){
 }
 function getFondosDetalle(co){
   if (co !== 'tfc') return [];
-  const cartera = st.tfc.cartera || 0;
+  const cartera = getCarteraTotal('tfc');
   const bv = tfcOpBancos().bavsa;
   const rows = [{ cliente: 'Cartera de cheques', razon: '', filas: 1, importe: cartera }];
   if (bv) rows.push({ cliente: 'Saldo BAVSA', razon: '', filas: 1, importe: bv.saldo || 0 });
