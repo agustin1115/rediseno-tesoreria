@@ -453,8 +453,8 @@
         <thead><tr><th>KPI</th><th>De dónde sale</th></tr></thead>
         <tbody>
           <tr><td>Pesos / Dólares / Cheques en caja</td><td>Ese Sheet compartido "resumen".</td></tr>
-          <tr><td>Saldo Financiera <em>(solo TF Carnes)</em></td><td>Mismo Sheet "resumen", pero de una celda fija en vez de una fila con nombre: <strong>celda B6</strong>. Trade Food no tiene esta fila.</td></tr>
-          <tr><td>Total equiv. pesos</td><td>Pesos + Cheques + (Dólares × la cotización que vos cargás arriba, si la cargaste). La cotización es tuya, no sale de ningún Sheet — queda guardada en tu navegador. <strong>No</strong> incluye Saldo Financiera (queda aparte, solo para consulta — avisame si la querés sumar acá).</td></tr>
+          <tr><td>Saldo Financiera <em>(solo TF Carnes)</em></td><td>Mismo Sheet "resumen" — la fila cuyo label (columna A) contiene "financiera" (hoy es la fila 6, pero se busca por texto, no por número de fila, para no depender de que nadie reordene filas arriba). Trade Food no tiene esta fila.</td></tr>
+          <tr><td>Total equiv. pesos</td><td>Pesos + Cheques + (Dólares × la cotización que vos cargás arriba, si la cargaste) + Saldo Financiera (solo TF Carnes) — a pedido tuyo.</td></tr>
           <tr><td>Total compromisos (Vencido / 7 / 15 / Más15)</td><td><strong>Excel manual</strong> que subís en esta misma pestaña ("Subir compromisos" de Modo B) — reutiliza el mismo lector que Cuentas a pagar, pero es un archivo distinto.</td></tr>
           <tr><td>BAVSA — Títulos / Cheques en custodia / Cupo Caución / Caución tomada <em>(solo Trade Food)</em></td><td><strong>Carga manual</strong> — no vienen de ningún Sheet ni Excel, no hay forma de leerlos automáticamente. Quedan guardados en este navegador (no en Supabase, así que no viajan a otra computadora). No afectan ningún total de Cash Flow ni de Resumen de Posición — son solo para consulta.</td></tr>
         </tbody>
@@ -674,6 +674,6 @@
 </script>
 
 <script src="js/app.js?v=1"></script>
-<script src="js/app-patches.js?v=10"></script>
+<script src="js/app-patches.js?v=11"></script>
 </body>
 </html>

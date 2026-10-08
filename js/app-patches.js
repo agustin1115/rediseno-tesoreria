@@ -83,7 +83,9 @@ function renderModoBExtra(co){
   const mb = st[co].modoB;
   const cotiz = _mbCotiz[co];
   const dolaresEnPesos = (cotiz && mb.dolares) ? mb.dolares * cotiz : 0;
-  const totalEquiv = (mb.pesos||0) + (mb.cheques||0) + dolaresEnPesos;
+  // Saldo Financiera entra acá a pedido tuyo — para Trade Food mb.saldoFinanciera
+  // no existe (queda undefined), así que no suma nada ahí.
+  const totalEquiv = (mb.pesos||0) + (mb.cheques||0) + dolaresEnPesos + (mb.saldoFinanciera||0);
 
   const elTotal = document.getElementById(`mb-kpi-${co}-total`);
   if (elTotal) {
@@ -123,11 +125,16 @@ renderModoB = function(co){
   renderModoBExtra(co);
 };
 
-// ── Saldo Financiera (solo TF Carnes): un dato más del mismo Sheet "resumen"
-// que ya lee loadModoB() para Pesos/Dólares/Cheques — pero este no tiene una
-// fila con el nombre de la empresa, está en una celda fija: B6. Se hace una
-// lectura aparte de la misma hoja (mismo criterio que ya usa esta página
-// para otros datos que no vienen de app.js) en vez de tocar loadModoB().
+// ── Saldo Financiera (solo TF Carnes): una fila más del mismo Sheet
+// "resumen" que ya lee loadModoB() para Pesos/Dólares/Cheques — a
+// diferencia de esas, esta fila no lleva el nombre de la empresa adelante
+// ("Saldo Financiera", no "TF Carnes Saldo Financiera"), así que no la
+// agarra el matcheo por MODOB_CO_LABELS del original. Se busca por label
+// en vez de por número de fila fijo (la fila en el Sheet real es la 6,
+// pero matchear por texto es más robusto si el día de mañana se agrega o
+// reordena una fila arriba). Lectura aparte de la misma hoja, mismo
+// criterio que ya usa esta página para otros datos que no vienen de
+// app.js, en vez de tocar loadModoB().
 const _origLoadModoB = loadModoB;
 loadModoB = async function(co){
   await _origLoadModoB(co);
@@ -135,8 +142,9 @@ loadModoB = async function(co){
   try {
     const data = await loadSheetRaw(MODOB_SHEET_IDS.tfc, MODOB_TAB);
     const rows = data.table?.rows || [];
-    const cell = rows[5]?.c?.[1]; // fila 6, columna B (0-indexado: fila 5, col 1)
-    st.tfc.modoB.saldoFinanciera = (cell && typeof cell.v === 'number') ? cell.v : null;
+    const fila = rows.find(r => /financiera/i.test(String(r.c?.[0]?.v ?? r.c?.[0]?.f ?? '')));
+    const val = fila?.c?.[1]?.v;
+    st.tfc.modoB.saldoFinanciera = (typeof val === 'number') ? val : null;
   } catch (e) {
     console.warn('[Saldo Financiera]', e.message);
     st.tfc.modoB.saldoFinanciera = null;
@@ -454,7 +462,9 @@ function renderResumen(){
   const compromisosBTf  = getModoBTotalCompromisos('tf');
 
   const cotizTfc = _mbCotiz.tfc, cotizTf = _mbCotiz.tf;
-  const mbTotalTfc = (st.tfc.modoB.pesos||0) + (st.tfc.modoB.cheques||0) + (cotizTfc ? (st.tfc.modoB.dolares||0)*cotizTfc : 0);
+  // Mismo cálculo que "Total equiv. pesos" de la pestaña Modo B (renderModoBExtra) —
+  // incluye Saldo Financiera (solo TFC) a pedido tuyo.
+  const mbTotalTfc = (st.tfc.modoB.pesos||0) + (st.tfc.modoB.cheques||0) + (cotizTfc ? (st.tfc.modoB.dolares||0)*cotizTfc : 0) + (st.tfc.modoB.saldoFinanciera||0);
   const mbTotalTf  = (st.tf.modoB.pesos ||0) + (st.tf.modoB.cheques ||0) + (cotizTf  ? (st.tf.modoB.dolares ||0)*cotizTf  : 0);
 
   // Cobrar / Incobrables: de TFcobranzas. "—" mientras se está leyendo el
