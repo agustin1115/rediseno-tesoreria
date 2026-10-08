@@ -208,6 +208,9 @@ tr:not(.weekend):not(.feriado):hover td{background:var(--surface-2)}
 .mb-kpi-value.pos{color:#6FCB92}
 .mb-kpi-value.neg{color:#E5675A}
 .mb-kpi-sub{font-size:9px;color:var(--topbar-ink-soft);margin-top:2px}
+.mb-kpi-input{width:100%;font:inherit;font-family:'Teko',sans-serif;font-weight:600;font-size:19px;padding:1px 4px;border-radius:5px;border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.08);color:var(--topbar-ink)}
+.mb-kpi-input::placeholder{color:var(--topbar-ink-soft);opacity:.5}
+.mb-kpi-input:focus{outline:none;border-color:rgba(255,255,255,.45);background:rgba(255,255,255,.14)}
 .mb-table-wrap{overflow-x:auto;overflow-y:auto;max-height:300px;background:var(--surface)}
 .mb-table{width:100%;border-collapse:collapse;font-size:11.5px}
 .mb-table thead{position:sticky;top:0;z-index:2}
@@ -491,6 +494,7 @@ tr.rs-row-off td{text-decoration:line-through}
   .fin-kpi-row,.mb-kpi-row{grid-template-columns:repeat(2,minmax(0,1fr))}
   .fin-kpi-value{font-size:18px}
   .mb-kpi-value{font-size:17px}
+  .mb-kpi-input{font-size:17px}
   .fin-header,.mb-header{padding:10px 12px}
 
   /* Tablas: menos padding para que entre más antes de tener que scrollear */

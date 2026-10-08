@@ -30,6 +30,31 @@ function setModoBCotizacion(co, value){
   if (el && _mbCotiz[co]) el.value = _mbCotiz[co];
 });
 
+// ── BAVSA (Trade Food): 4 montos de carga manual (Títulos, Cheques en
+// custodia, Cupo Caución, Caución tomada) — no vienen de ningún Sheet ni
+// Excel, es información que no se puede leer de ningún lado automático,
+// así que se cargan a mano y quedan guardados en este navegador. No afectan
+// ningún total de Cash Flow ni de Resumen de Posición (son solo para
+// consulta) — avisame si querés que alguno de los 4 sume a algún cálculo.
+const _bavsaTf = { titulos: null, custodia: null, cupo: null, caucion: null };
+(function loadBavsaTf(){
+  try {
+    const raw = localStorage.getItem('cf_bavsa_tf_v1');
+    if (raw) Object.assign(_bavsaTf, JSON.parse(raw));
+  } catch(e){}
+})();
+function saveBavsaTf(){ try{ localStorage.setItem('cf_bavsa_tf_v1', JSON.stringify(_bavsaTf)); }catch(e){} }
+function setBavsaTf(campo, value){
+  const n = parseFloat(value);
+  _bavsaTf[campo] = Number.isFinite(n) ? n : null;
+  saveBavsaTf();
+}
+// Precarga los inputs con lo guardado (mismo criterio que la cotización de arriba).
+Object.entries({ titulos: 'bavsa-tf-titulos', custodia: 'bavsa-tf-custodia', cupo: 'bavsa-tf-cupo', caucion: 'bavsa-tf-caucion' }).forEach(([campo, id]) => {
+  const el = document.getElementById(id);
+  if (el && _bavsaTf[campo] != null) el.value = _bavsaTf[campo];
+});
+
 // "Total compromisos" de Modo B: Vencido+Próx.7+Próx.15+Más15 de los
 // compromisos subidos en "Subir compromisos" de Modo B (st[co].modoB.provRaw)
 // — un archivo distinto de "Cuentas a pagar" (st[co].provRaw). Se usa tanto
@@ -79,12 +104,44 @@ function renderModoBExtra(co){
   const totalComp = getModoBTotalCompromisos(co);
   const elTV = document.getElementById(`mb-kpi-${co}-total-venc`);
   if (elTV) elTV.textContent = totalComp > 0 ? fN(totalComp) : '—';
+
+  // Saldo Financiera (solo TF Carnes): celda B6 del Sheet "resumen" — la
+  // trae loadModoB() parcheado más abajo, acá solo se muestra.
+  if (co === 'tfc') {
+    const elFin = document.getElementById('mb-kpi-tfc-financiera');
+    if (elFin) {
+      const v = mb.saldoFinanciera;
+      elFin.textContent = (v != null) ? fN(v) : '—';
+      elFin.className = 'mb-kpi-value' + (v == null ? '' : v >= 0 ? ' pos' : ' neg');
+    }
+  }
 }
 
 const _origRenderModoB = renderModoB;
 renderModoB = function(co){
   _origRenderModoB(co);
   renderModoBExtra(co);
+};
+
+// ── Saldo Financiera (solo TF Carnes): un dato más del mismo Sheet "resumen"
+// que ya lee loadModoB() para Pesos/Dólares/Cheques — pero este no tiene una
+// fila con el nombre de la empresa, está en una celda fija: B6. Se hace una
+// lectura aparte de la misma hoja (mismo criterio que ya usa esta página
+// para otros datos que no vienen de app.js) en vez de tocar loadModoB().
+const _origLoadModoB = loadModoB;
+loadModoB = async function(co){
+  await _origLoadModoB(co);
+  if (co !== 'tfc') return;
+  try {
+    const data = await loadSheetRaw(MODOB_SHEET_IDS.tfc, MODOB_TAB);
+    const rows = data.table?.rows || [];
+    const cell = rows[5]?.c?.[1]; // fila 6, columna B (0-indexado: fila 5, col 1)
+    st.tfc.modoB.saldoFinanciera = (cell && typeof cell.v === 'number') ? cell.v : null;
+  } catch (e) {
+    console.warn('[Saldo Financiera]', e.message);
+    st.tfc.modoB.saldoFinanciera = null;
+  }
+  renderModoB('tfc');
 };
 
 // ── Cobrar / Incobrables: se leen en vivo de los mismos Google Sheets que usa

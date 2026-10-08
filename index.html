@@ -9,7 +9,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Teko:wght@500;600;700&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/style.css?v=10">
+<link rel="stylesheet" href="css/style.css?v=11">
 </head>
 <body>
 <div class="page">
@@ -178,6 +178,7 @@
         <div class="mb-kpi"><div class="mb-kpi-label">Pesos en caja</div><div class="mb-kpi-value pos" id="mb-kpi-tfc-pesos">—</div></div>
         <div class="mb-kpi"><div class="mb-kpi-label">Dólares en caja</div><div class="mb-kpi-value pos" id="mb-kpi-tfc-dolares">—</div></div>
         <div class="mb-kpi"><div class="mb-kpi-label">Cheques Modo B</div><div class="mb-kpi-value pos" id="mb-kpi-tfc-cheques">—</div></div>
+        <div class="mb-kpi"><div class="mb-kpi-label">Saldo Financiera</div><div class="mb-kpi-value" id="mb-kpi-tfc-financiera">—</div></div>
         <div class="mb-kpi"><div class="mb-kpi-label">Total equiv. pesos</div><div class="mb-kpi-value pos" id="mb-kpi-tfc-total">—</div><div class="mb-kpi-sub" id="mb-kpi-tfc-total-sub"></div></div>
       </div>
       <div class="mb-kpi-row" style="border-top:1px solid rgba(255,255,255,.08)">
@@ -233,6 +234,32 @@
       </div>
 
       <div class="panel-rs" id="rs-slot-tf"></div>
+    </div>
+
+    <!-- BAVSA (Trade Food): 4 montos de carga manual, no vienen de ningún
+         Sheet/Excel — se guardan en este navegador (localStorage). -->
+    <div class="mb-section section-card" id="bavsa-section-tf">
+      <div class="mb-header">
+        <span class="mb-title">🏦 BAVSA</span>
+      </div>
+      <div class="mb-kpi-row">
+        <div class="mb-kpi">
+          <div class="mb-kpi-label">Títulos</div>
+          <input type="number" class="mb-kpi-input" id="bavsa-tf-titulos" placeholder="0" oninput="setBavsaTf('titulos',this.value)">
+        </div>
+        <div class="mb-kpi">
+          <div class="mb-kpi-label">Cheques en custodia</div>
+          <input type="number" class="mb-kpi-input" id="bavsa-tf-custodia" placeholder="0" oninput="setBavsaTf('custodia',this.value)">
+        </div>
+        <div class="mb-kpi">
+          <div class="mb-kpi-label">Cupo Caución</div>
+          <input type="number" class="mb-kpi-input" id="bavsa-tf-cupo" placeholder="0" oninput="setBavsaTf('cupo',this.value)">
+        </div>
+        <div class="mb-kpi">
+          <div class="mb-kpi-label">Caución tomada</div>
+          <input type="number" class="mb-kpi-input" id="bavsa-tf-caucion" placeholder="0" oninput="setBavsaTf('caucion',this.value)">
+        </div>
+      </div>
     </div>
 
     <div class="mb-section section-card" id="mb-section-tf">
@@ -426,8 +453,10 @@
         <thead><tr><th>KPI</th><th>De dónde sale</th></tr></thead>
         <tbody>
           <tr><td>Pesos / Dólares / Cheques en caja</td><td>Ese Sheet compartido "resumen".</td></tr>
-          <tr><td>Total equiv. pesos</td><td>Pesos + Cheques + (Dólares × la cotización que vos cargás arriba, si la cargaste). La cotización es tuya, no sale de ningún Sheet — queda guardada en tu navegador.</td></tr>
+          <tr><td>Saldo Financiera <em>(solo TF Carnes)</em></td><td>Mismo Sheet "resumen", pero de una celda fija en vez de una fila con nombre: <strong>celda B6</strong>. Trade Food no tiene esta fila.</td></tr>
+          <tr><td>Total equiv. pesos</td><td>Pesos + Cheques + (Dólares × la cotización que vos cargás arriba, si la cargaste). La cotización es tuya, no sale de ningún Sheet — queda guardada en tu navegador. <strong>No</strong> incluye Saldo Financiera (queda aparte, solo para consulta — avisame si la querés sumar acá).</td></tr>
           <tr><td>Total compromisos (Vencido / 7 / 15 / Más15)</td><td><strong>Excel manual</strong> que subís en esta misma pestaña ("Subir compromisos" de Modo B) — reutiliza el mismo lector que Cuentas a pagar, pero es un archivo distinto.</td></tr>
+          <tr><td>BAVSA — Títulos / Cheques en custodia / Cupo Caución / Caución tomada <em>(solo Trade Food)</em></td><td><strong>Carga manual</strong> — no vienen de ningún Sheet ni Excel, no hay forma de leerlos automáticamente. Quedan guardados en este navegador (no en Supabase, así que no viajan a otra computadora). No afectan ningún total de Cash Flow ni de Resumen de Posición — son solo para consulta.</td></tr>
         </tbody>
       </table>
 
@@ -645,6 +674,6 @@
 </script>
 
 <script src="js/app.js?v=1"></script>
-<script src="js/app-patches.js?v=9"></script>
+<script src="js/app-patches.js?v=10"></script>
 </body>
 </html>
