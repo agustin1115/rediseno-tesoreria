@@ -33,9 +33,10 @@ function setModoBCotizacion(co, value){
 // ── BAVSA (Trade Food): 4 montos de carga manual (Títulos, Cheques en
 // custodia, Cupo Caución, Caución tomada) — no vienen de ningún Sheet ni
 // Excel, es información que no se puede leer de ningún lado automático,
-// así que se cargan a mano y quedan guardados en este navegador. No afectan
-// ningún total de Cash Flow ni de Resumen de Posición (son solo para
-// consulta) — avisame si querés que alguno de los 4 sume a algún cálculo.
+// así que se cargan a mano y quedan guardados en este navegador. La suma
+// de los 4 (getBavsaSaldoTf(), más abajo) se muestra en la tarjeta KPI
+// "Saldo BAVSA" de Trade Food y, a pedido tuyo, suma a la Posición Modo A
+// de Trade Food (mismo criterio que BAVSA ya usaba en TF Carnes).
 const _bavsaTf = { titulos: null, custodia: null, cupo: null, caucion: null };
 (function loadBavsaTf(){
   try {
@@ -534,7 +535,7 @@ function renderResumen(){
   const totalBTfc = (mbTotalTfc||0) - compromisosBTfc + (cobrarBTfc||0) - movidasTfc + (incobrBTfc||0) * incobrablesFactorB;
   const totalBTf  = (mbTotalTf ||0) - compromisosBTf  + (cobrarBTf ||0) + (incobrBTf ||0) * incobrablesFactorB;
   const totalATfc = (bancosTfc||0) + bavsaTfc - emitidosTfc - cpagarTfc + carteraTfc + (cobrarATfc||0) + (incobrATfc||0) * incobrablesFactorA + totalBTfc;
-  const totalATf  = (bancosTf ||0) - emitidosTf  - cpagarTf  + carteraTf  + (cobrarATf ||0) + (incobrATf ||0) * incobrablesFactorA;
+  const totalATf  = (bancosTf ||0) - emitidosTf  - cpagarTf  + carteraTf  + (cobrarATf ||0) + (incobrATf ||0) * incobrablesFactorA + (getBavsaSaldoTf()||0);
 
   // Foto de estos números para "Cerrar semana" (ver cerrarSemana() más abajo)
   // — se recalcula cada vez que corre renderResumen(), así siempre está al
@@ -587,13 +588,13 @@ function renderResumen(){
         <td class="rs-val rs-total tf-col ${cls(totalATf)}">${fmt(totalATf)}</td>
       </tr>`;
     footHtml = `Modo A (TF Carnes) = Bancos + BAVSA − Cheques emitidos − Cuentas a pagar + Cheques en cartera + Cobrar + Incobrables + Posición Modo B.
-      Modo A (Trade Food) = Bancos − Cheques emitidos − Cuentas a pagar + Cheques en cartera + Cobrar + Incobrables ("Posición Modo B" es solo
-      TF Carnes, acá no suma nada). La fila "BAVSA" en Trade Food es la suma de los 4 montos manuales de la sección BAVSA de Modo B (Títulos +
-      Cheques en custodia + Cupo Caución + Caución tomada) — es un BAVSA distinto del banco de TF Carnes, y por ahora es solo informativo:
-      no entra en la Posición Modo A de Trade Food (avisame si querés que sume). Acá "Cobrar" e "Incobrables" son solo Archivo A de TFcobranzas
-      (en Modo B, ambos son solo Archivo B) — a pedido tuyo, nunca sumados entre archivos. Tocá el nombre "Incobrables" para activarlo/
-      desactivarlo del total. "Posición Modo B" se suma tal cual da (puede ser negativo, en cuyo caso resta) — a pedido tuyo. "Movidas (a
-      Financiera)" ya no está acá — se movió a Modo B.`;
+      Modo A (Trade Food) = Bancos + BAVSA − Cheques emitidos − Cuentas a pagar + Cheques en cartera + Cobrar + Incobrables ("Posición Modo B"
+      es solo TF Carnes, acá no suma nada). La fila "BAVSA" en Trade Food es la suma de los 4 montos manuales de la sección BAVSA de Modo B
+      (Títulos + Cheques en custodia + Cupo Caución + Caución tomada) — es un BAVSA distinto del banco de TF Carnes, pero igual que ese,
+      a pedido tuyo, suma a la Posición Modo A. Acá "Cobrar" e "Incobrables" son solo Archivo A de TFcobranzas (en Modo B, ambos son solo
+      Archivo B) — a pedido tuyo, nunca sumados entre archivos. Tocá el nombre "Incobrables" para activarlo/desactivarlo del total.
+      "Posición Modo B" se suma tal cual da (puede ser negativo, en cuyo caso resta) — a pedido tuyo. "Movidas (a Financiera)" ya no está
+      acá — se movió a Modo B.`;
   } else {
     // Modo B: la "posición" parte de lo disponible en Modo B (caja), no del
     // saldo bancario — el resto de los ajustes es el mismo criterio que Modo A.
