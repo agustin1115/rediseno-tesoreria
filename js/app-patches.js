@@ -545,6 +545,24 @@ async function cobRefresh(){
 cobRefresh();
 setInterval(cobRefresh, 10 * 60 * 1000);
 
+// El botón "↺ Actualizar" de Resumen de Posición llamaba directo a
+// renderResumen(), que solo recalcula con lo que YA está cargado en memoria
+// — si cambiaste algo en el Sheet "resumen" (Modo B/Saldo Financiera), en el
+// Sheet "Reporte Tesorería" o en TFcobranzas, apretar ese botón no traía lo
+// nuevo (parecía "no funcionar"). Ahora dispara el mismo refresh completo
+// que el botón de arriba (refresh(), que ya re-lee todos los Sheets/Excels y
+// termina en renderAll()→renderResumen()) más cobRefresh() (Cobrar/
+// Incobrables de TFcobranzas, que si no se auto-actualiza solo cada 10 min).
+async function refreshResumen(){
+  const btn = document.getElementById('btn-resumen-refresh');
+  if (btn) { btn.disabled = true; btn.textContent = '↺ Cargando...'; }
+  try {
+    await Promise.all([refresh(), cobRefresh()]);
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = '↺ Actualizar'; }
+  }
+}
+
 // ── Resumen de Posición: Modo A / Modo B, TF Carnes vs. Trade Food ─────────
 // Modo A = posición "banco": saldo bancario ajustado por cheques emitidos,
 // cuentas a pagar y cartera de cheques propia, más lo que falta cobrar (menos
