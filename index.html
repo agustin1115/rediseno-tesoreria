@@ -220,7 +220,7 @@
             <div class="kpi kpi-click" onclick="verKpi('tf','cartera')"><div class="kpi-label">Cartera cheques ↗</div><div class="kpi-value pos" id="kpi-tf-cartera">—</div><div class="kpi-sub" id="kpi-tf-nchq">—</div></div>
             <div class="kpi kpi-click" onclick="verKpi('tf','emitidos')"><div class="kpi-label">Chq emitidos (total) ↗</div><div class="kpi-value neg" id="kpi-tf-emitidos">—</div><div class="kpi-sub" id="kpi-tf-nemitidos">—</div></div>
             <div class="kpi kpi-click" onclick="verKpi('tf','cpagar')"><div class="kpi-label">Cuentas a pagar ↗</div><div class="kpi-value neg" id="kpi-tf-cpagar">—</div><div class="kpi-sub" id="kpi-tf-ncpagar">—</div></div>
-            <div class="kpi kpi-click" onclick="verKpi('tf','bavsa')"><div class="kpi-label">Saldo BAVSA ↗</div><div class="kpi-value" id="kpi-tf-bavsa">—</div><div class="kpi-sub">Títulos + Custodia + Cupo + Caución</div></div>
+            <div class="kpi kpi-click" onclick="verKpi('tf','bavsa')"><div class="kpi-label">Saldo BAVSA ↗</div><div class="kpi-value" id="kpi-tf-bavsa">—</div><div class="kpi-sub">Tenencia − Caución</div></div>
           </div>
         </div>
 
@@ -238,27 +238,35 @@
     </div>
 
     <!-- BAVSA (Trade Food): 4 montos de carga manual, no vienen de ningún
-         Sheet/Excel — se guardan en este navegador (localStorage). -->
+         Sheet/Excel — se guardan en este navegador (localStorage, persiste
+         entre reinicios pero no sincroniza a otro dispositivo/navegador). -->
     <div class="mb-section section-card" id="bavsa-section-tf">
       <div class="mb-header">
         <span class="mb-title">🏦 BAVSA</span>
       </div>
       <div class="mb-kpi-row">
         <div class="mb-kpi">
-          <div class="mb-kpi-label">Títulos</div>
-          <input type="number" class="mb-kpi-input" id="bavsa-tf-titulos" placeholder="0" oninput="setBavsaTf('titulos',this.value)">
+          <div class="mb-kpi-label">Tenencia</div>
+          <input type="number" class="mb-kpi-input" id="bavsa-tf-tenencia" placeholder="0" oninput="setBavsaTf('tenencia',this.value)">
         </div>
         <div class="mb-kpi">
-          <div class="mb-kpi-label">Cheques en custodia</div>
-          <input type="number" class="mb-kpi-input" id="bavsa-tf-custodia" placeholder="0" oninput="setBavsaTf('custodia',this.value)">
+          <div class="mb-kpi-label">Garantía</div>
+          <input type="number" class="mb-kpi-input" id="bavsa-tf-garantia" placeholder="0" oninput="setBavsaTf('garantia',this.value)">
         </div>
         <div class="mb-kpi">
-          <div class="mb-kpi-label">Cupo Caución</div>
-          <input type="number" class="mb-kpi-input" id="bavsa-tf-cupo" placeholder="0" oninput="setBavsaTf('cupo',this.value)">
-        </div>
-        <div class="mb-kpi">
-          <div class="mb-kpi-label">Caución tomada</div>
+          <div class="mb-kpi-label">Caución</div>
           <input type="number" class="mb-kpi-input" id="bavsa-tf-caucion" placeholder="0" oninput="setBavsaTf('caucion',this.value)">
+        </div>
+        <div class="mb-kpi">
+          <div class="mb-kpi-label">Disponible Caución</div>
+          <input type="number" class="mb-kpi-input" id="bavsa-tf-disp-caucion" placeholder="0" oninput="setBavsaTf('disponibleCaucion',this.value)">
+        </div>
+      </div>
+      <div class="mb-kpi-row">
+        <div class="mb-kpi total" style="grid-column:1/-1">
+          <div class="mb-kpi-label">Cupo disponible caución</div>
+          <div class="mb-kpi-value" id="bavsa-tf-cupo-disp">—</div>
+          <div class="mb-kpi-sub">70% × (Tenencia − Garantía) − Caución</div>
         </div>
       </div>
     </div>
@@ -408,7 +416,7 @@
 
       <h3>Saldo BAVSA</h3>
       <p><strong>TF Carnes</strong>: sale del Sheet "Reporte Tesorería" — es la fila del banco "BAVSA" ahí adentro, no una fuente separada.
-      <strong>Trade Food</strong>: es un BAVSA distinto (no es un banco con saldo en el Sheet) — acá es la <strong>suma de los 4 montos manuales</strong> de la sección BAVSA de Modo B (Títulos + Cheques en custodia + Cupo Caución + Caución tomada, ver ④). Clickeando la tarjeta se abre el detalle de los 4 montos que la componen.</p>
+      <strong>Trade Food</strong>: es un BAVSA distinto (no es un banco con saldo en el Sheet) — acá es <strong>Tenencia − Caución</strong>, 2 de los 4 montos manuales de la sección BAVSA de Modo B (Tenencia, Garantía, Caución, Disponible Caución, ver ④; Garantía y Disponible Caución no entran en este número, arman el "Cupo disponible caución" calculado de esa misma sección). Clickeando la tarjeta se abre el detalle de los montos que la componen.</p>
 
       <h3>Fondos disponibles (solo TF Carnes)</h3>
       <div class="leeme-flow">Cartera cheques <span class="arrow">+</span> Saldo BAVSA <span class="arrow">=</span> Fondos disponibles</div>
@@ -459,18 +467,18 @@
           <tr><td>Saldo Financiera <em>(solo TF Carnes)</em></td><td>Mismo Sheet "resumen" — la fila cuyo label (columna A) contiene "financiera" (hoy es la fila 6, pero se busca por texto, no por número de fila, para no depender de que nadie reordene filas arriba). Trade Food no tiene esta fila.</td></tr>
           <tr><td>Total equiv. pesos</td><td>Pesos + Cheques + (Dólares × la cotización que vos cargás arriba, si la cargaste) + Saldo Financiera (solo TF Carnes) — a pedido tuyo.</td></tr>
           <tr><td>Total compromisos (Vencido / 7 / 15 / Más15)</td><td><strong>Excel manual</strong> que subís en esta misma pestaña ("Subir compromisos" de Modo B) — reutiliza el mismo lector que Cuentas a pagar, pero es un archivo distinto.</td></tr>
-          <tr><td>BAVSA — Títulos / Cheques en custodia / Cupo Caución / Caución tomada <em>(solo Trade Food)</em></td><td><strong>Carga manual</strong> — no vienen de ningún Sheet ni Excel, no hay forma de leerlos automáticamente. Quedan guardados en este navegador (no en Supabase, así que no viajan a otra computadora). La <strong>suma de los 4</strong> es la tarjeta "Saldo BAVSA ↗" de Cash Flow Proyectado (①) y la fila "BAVSA" de Trade Food en Resumen de Posición (⑤) — y, a pedido tuyo, también suma a la Posición Modo A de Trade Food (ver ⑤).</td></tr>
+          <tr><td>BAVSA — Tenencia / Garantía / Caución / Disponible Caución <em>(solo Trade Food)</em></td><td><strong>Carga manual</strong> — no vienen de ningún Sheet ni Excel, no hay forma de leerlos automáticamente. Quedan guardados en este navegador (localStorage: persiste entre reinicios de la máquina/navegador, pero no viaja a otra computadora ni a otro navegador — no es Supabase). <strong>Tenencia − Caución</strong> es la tarjeta "Saldo BAVSA ↗" de Cash Flow Proyectado (①) y la fila "BAVSA" de Trade Food en Resumen de Posición (⑤) — y, a pedido tuyo, también suma a la Posición Modo A de Trade Food (ver ⑤). Garantía y Disponible Caución no entran en ese número: arman el "Cupo disponible caución" calculado de la misma sección (70% × (Tenencia − Garantía) − Caución), que es solo para consulta y no suma a ningún total.</td></tr>
         </tbody>
       </table>
 
       <h2>⑤ Resumen de Posición — Modo A</h2>
       <div class="leeme-flow">Bancos <span class="arrow">+</span> BAVSA <span class="arrow">−</span> Cheques emitidos <span class="arrow">−</span> Cuentas a pagar <span class="arrow">+</span> Cheques en cartera <span class="arrow">+</span> Cobrar <span class="arrow">+</span> Incobrables <span class="arrow">+</span> Posición Modo B (solo TFC) <span class="arrow">=</span> <b>Posición Modo A</b></div>
-      <p>La parte de Bancos/Cheques emitidos/Cuentas a pagar/Cheques en cartera está <strong>confirmada</strong> contra el ejemplo de referencia que me pasaste. "BAVSA" se sumó después, a pedido tuyo — en TF Carnes es el banco BAVSA (Sheet "Reporte Tesorería"); en Trade Food es la suma de los 4 montos manuales de la sección BAVSA de Modo B (④) — dos fuentes distintas, pero las dos suman a la Posición Modo A de su empresa. <strong>Cobrar</strong> usa solo Archivo A (antes sumaba Archivo A + Archivo B; se ajustó a pedido tuyo). <strong>Incobrables se suma</strong> al total (no se resta), y se puede <strong>activar/desactivar tocando el nombre de la fila</strong> — cuando está desactivado, el número sigue mostrándose (tachado) pero no entra en el total. "Movidas (a Financiera)" ya no está en Modo A — se movió a Modo B. <strong>Posición Modo B</strong> es el total completo de Modo B (sección ⑥) sumado tal cual da — si Modo B diera negativo, resta — y es <strong>solo TF Carnes</strong>: en Trade Food esa fila queda en "—" y no afecta su total de Modo A.</p>
+      <p>La parte de Bancos/Cheques emitidos/Cuentas a pagar/Cheques en cartera está <strong>confirmada</strong> contra el ejemplo de referencia que me pasaste. "BAVSA" se sumó después, a pedido tuyo — en TF Carnes es el banco BAVSA (Sheet "Reporte Tesorería"); en Trade Food es <strong>Tenencia − Caución</strong>, de los 4 montos manuales de la sección BAVSA de Modo B (④) — dos fuentes distintas, pero las dos suman a la Posición Modo A de su empresa. <strong>Cobrar</strong> usa solo Archivo A (antes sumaba Archivo A + Archivo B; se ajustó a pedido tuyo). <strong>Incobrables se suma</strong> al total (no se resta), y se puede <strong>activar/desactivar tocando el nombre de la fila</strong> — cuando está desactivado, el número sigue mostrándose (tachado) pero no entra en el total. "Movidas (a Financiera)" ya no está en Modo A — se movió a Modo B. <strong>Posición Modo B</strong> es el total completo de Modo B (sección ⑥) sumado tal cual da — si Modo B diera negativo, resta — y es <strong>solo TF Carnes</strong>: en Trade Food esa fila queda en "—" y no afecta su total de Modo A.</p>
       <table class="leeme-table">
         <thead><tr><th>Fila</th><th>De dónde sale</th></tr></thead>
         <tbody>
           <tr><td>Bancos</td><td>Mismo número que "Saldo bancos" de la franja de KPIs (①).</td></tr>
-          <tr><td>BAVSA</td><td>Mismo número que la tarjeta "Saldo BAVSA" de la franja de KPIs (①), para las dos empresas — en TF Carnes es el banco BAVSA; en Trade Food es la suma de los 4 montos manuales de BAVSA (④). Se suma a la Posición Modo A en las dos empresas.</td></tr>
+          <tr><td>BAVSA</td><td>Mismo número que la tarjeta "Saldo BAVSA" de la franja de KPIs (①), para las dos empresas — en TF Carnes es el banco BAVSA; en Trade Food es Tenencia − Caución, de los 4 montos manuales de BAVSA (④). Se suma a la Posición Modo A en las dos empresas.</td></tr>
           <tr><td>Cheques emitidos</td><td>Mismo número que "Chq emitidos (total)" (①).</td></tr>
           <tr><td>Cuentas a pagar</td><td>Mismo número que "Cuentas a pagar" (①).</td></tr>
           <tr><td>Cheques en cartera</td><td>Mismo número que "Cartera cheques" (①).</td></tr>
@@ -678,6 +686,6 @@
 </script>
 
 <script src="js/app.js?v=1"></script>
-<script src="js/app-patches.js?v=14"></script>
+<script src="js/app-patches.js?v=15"></script>
 </body>
 </html>

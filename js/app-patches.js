@@ -30,28 +30,55 @@ function setModoBCotizacion(co, value){
   if (el && _mbCotiz[co]) el.value = _mbCotiz[co];
 });
 
-// ── BAVSA (Trade Food): 4 montos de carga manual (Títulos, Cheques en
-// custodia, Cupo Caución, Caución tomada) — no vienen de ningún Sheet ni
-// Excel, es información que no se puede leer de ningún lado automático,
-// así que se cargan a mano y quedan guardados en este navegador. La suma
-// de los 4 (getBavsaSaldoTf(), más abajo) se muestra en la tarjeta KPI
-// "Saldo BAVSA" de Trade Food y, a pedido tuyo, suma a la Posición Modo A
-// de Trade Food (mismo criterio que BAVSA ya usaba en TF Carnes).
-const _bavsaTf = { titulos: null, custodia: null, cupo: null, caucion: null };
+// ── BAVSA (Trade Food): 4 montos de carga manual (Tenencia, Garantía,
+// Caución, Disponible Caución) — no vienen de ningún Sheet ni Excel, es
+// información que no se puede leer de ningún lado automático, así que se
+// cargan a mano y quedan guardados en ESTE NAVEGADOR (localStorage — persiste
+// entre reinicios de la máquina/navegador, pero no sincroniza a otro
+// dispositivo/navegador distinto; si lo abrís desde otro lado vas a verlo
+// vacío, eso es esperable, no es que se borró). El "Saldo BAVSA" que se
+// muestra en la tarjeta KPI de Cash Flow y en la fila BAVSA de Resumen de
+// Posición (y que suma a la Posición Modo A de Trade Food) es Tenencia −
+// Caución (getBavsaSaldoTf(), más abajo) — Garantía y Disponible Caución NO
+// entran ahí, son los otros 2 datos que arman el "Cupo disponible caución"
+// calculado (getBavsaCupoDispTf()): 70% × (Tenencia − Garantía) − Caución.
+const _bavsaTf = { tenencia: null, garantia: null, caucion: null, disponibleCaucion: null };
 (function loadBavsaTf(){
   try {
-    const raw = localStorage.getItem('cf_bavsa_tf_v1');
-    if (raw) Object.assign(_bavsaTf, JSON.parse(raw));
+    const raw = localStorage.getItem('cf_bavsa_tf_v2');
+    if (raw) { Object.assign(_bavsaTf, JSON.parse(raw)); return; }
+    // Migración única desde la versión anterior de la tarjeta (Títulos,
+    // Cheques en custodia, Cupo Caución, Caución tomada) — mismos 4
+    // casilleros, ahora con otro nombre y otra cuenta: se reusa lo que ya
+    // estaba cargado en cada posición en vez de empezar de cero.
+    const old = localStorage.getItem('cf_bavsa_tf_v1');
+    if (old) {
+      const o = JSON.parse(old);
+      _bavsaTf.tenencia = o.titulos ?? null;
+      _bavsaTf.garantia = o.custodia ?? null;
+      _bavsaTf.caucion = o.cupo ?? null;
+      _bavsaTf.disponibleCaucion = o.caucion ?? null;
+      saveBavsaTf();
+    }
   } catch(e){}
 })();
-function saveBavsaTf(){ try{ localStorage.setItem('cf_bavsa_tf_v1', JSON.stringify(_bavsaTf)); }catch(e){} }
+function saveBavsaTf(){ try{ localStorage.setItem('cf_bavsa_tf_v2', JSON.stringify(_bavsaTf)); }catch(e){} }
 
-// Saldo BAVSA (Trade Food) = suma de los 4 montos manuales. null solo si
-// no se cargó ninguno todavía (para mostrar "—" en vez de "0").
+// Saldo BAVSA (Trade Food) = Tenencia − Caución. null solo si no se cargó
+// ninguno de los dos todavía (para mostrar "—" en vez de "0").
 function getBavsaSaldoTf(){
-  const { titulos, custodia, cupo, caucion } = _bavsaTf;
-  if (titulos == null && custodia == null && cupo == null && caucion == null) return null;
-  return (titulos||0) + (custodia||0) + (cupo||0) + (caucion||0);
+  const { tenencia, caucion } = _bavsaTf;
+  if (tenencia == null && caucion == null) return null;
+  return (tenencia||0) - (caucion||0);
+}
+// Cupo disponible caución = 70% de (Tenencia − Garantía), menos la Caución
+// ya tomada. Es una cuenta aparte del Saldo BAVSA de arriba — no suma a
+// ningún total de Cash Flow ni de Resumen de Posición, es solo para
+// consulta en la propia tarjeta BAVSA.
+function getBavsaCupoDispTf(){
+  const { tenencia, garantia, caucion } = _bavsaTf;
+  if (tenencia == null && garantia == null && caucion == null) return null;
+  return 0.70 * ((tenencia||0) - (garantia||0)) - (caucion||0);
 }
 // Actualiza solo la tarjeta KPI "Saldo BAVSA" de Trade Food (Cash Flow
 // Proyectado) — separada de renderResumen() a propósito: esta se llama
@@ -64,11 +91,20 @@ function renderBavsaTfKpi(){
     el.textContent = (v != null) ? fN(v) : '—';
   }
 }
+function renderBavsaCupoDispTf(){
+  const el = document.getElementById('bavsa-tf-cupo-disp');
+  if (el) {
+    const v = getBavsaCupoDispTf();
+    el.textContent = (v != null) ? fN(v) : '—';
+    el.className = 'mb-kpi-value' + (v == null ? '' : v >= 0 ? ' pos' : ' neg');
+  }
+}
 function setBavsaTf(campo, value){
   const n = parseFloat(value);
   _bavsaTf[campo] = Number.isFinite(n) ? n : null;
   saveBavsaTf();
   renderBavsaTfKpi();
+  renderBavsaCupoDispTf();
   // Acá sí es seguro llamar a renderResumen() (que también muestra el
   // Saldo BAVSA, en la fila BAVSA/columna Trade Food): esto solo corre
   // cuando el usuario toca un input, mucho después de que el script
@@ -76,11 +112,12 @@ function setBavsaTf(campo, value){
   renderResumen();
 }
 // Precarga los inputs con lo guardado (mismo criterio que la cotización de arriba).
-Object.entries({ titulos: 'bavsa-tf-titulos', custodia: 'bavsa-tf-custodia', cupo: 'bavsa-tf-cupo', caucion: 'bavsa-tf-caucion' }).forEach(([campo, id]) => {
+Object.entries({ tenencia: 'bavsa-tf-tenencia', garantia: 'bavsa-tf-garantia', caucion: 'bavsa-tf-caucion', disponibleCaucion: 'bavsa-tf-disp-caucion' }).forEach(([campo, id]) => {
   const el = document.getElementById(id);
   if (el && _bavsaTf[campo] != null) el.value = _bavsaTf[campo];
 });
 renderBavsaTfKpi();
+renderBavsaCupoDispTf();
 
 // ── Cheques cargados a mano en "Cartera de Cheques" ─────────────────
 // A veces hay un cheque real en cartera que no viene ni del Excel del banco
@@ -681,9 +718,10 @@ function renderResumen(){
       </tr>`;
     footHtml = `Modo A (TF Carnes) = Bancos + BAVSA − Cheques emitidos − Cuentas a pagar + Cheques en cartera + Cobrar + Incobrables + Posición Modo B.
       Modo A (Trade Food) = Bancos + BAVSA − Cheques emitidos − Cuentas a pagar + Cheques en cartera + Cobrar + Incobrables ("Posición Modo B"
-      es solo TF Carnes, acá no suma nada). La fila "BAVSA" en Trade Food es la suma de los 4 montos manuales de la sección BAVSA de Modo B
-      (Títulos + Cheques en custodia + Cupo Caución + Caución tomada) — es un BAVSA distinto del banco de TF Carnes, pero igual que ese,
-      a pedido tuyo, suma a la Posición Modo A. Acá "Cobrar" e "Incobrables" son solo Archivo A de TFcobranzas (en Modo B, ambos son solo
+      es solo TF Carnes, acá no suma nada). La fila "BAVSA" en Trade Food es Tenencia − Caución (de los 4 montos manuales de la sección BAVSA
+      de Modo B: Tenencia, Garantía, Caución, Disponible Caución — Garantía y Disponible Caución no entran acá, arman el "Cupo disponible
+      caución" calculado de esa misma sección) — es un BAVSA distinto del banco de TF Carnes, pero igual que ese, a pedido tuyo, suma a la
+      Posición Modo A. Acá "Cobrar" e "Incobrables" son solo Archivo A de TFcobranzas (en Modo B, ambos son solo
       Archivo B) — a pedido tuyo, nunca sumados entre archivos. Tocá el nombre "Incobrables" para activarlo/desactivarlo del total.
       "Posición Modo B" se suma tal cual da (puede ser negativo, en cuyo caso resta) — a pedido tuyo. "Movidas (a Financiera)" ya no está
       acá — se movió a Modo B.`;
@@ -1026,14 +1064,15 @@ function getBavsaDetalle(co){
     if (!bv) return [];
     return [{ cliente: bv.nombre, razon: `Acuerdo: ${fN(bv.acuerdo || 0)}`, filas: 1, importe: bv.saldo || 0 }];
   }
-  // Trade Food: BAVSA son los 4 montos de carga manual (sección BAVSA de Modo B).
-  const campos = [
-    { cliente: 'Títulos', importe: _bavsaTf.titulos },
-    { cliente: 'Cheques en custodia', importe: _bavsaTf.custodia },
-    { cliente: 'Cupo Caución', importe: _bavsaTf.cupo },
-    { cliente: 'Caución tomada', importe: _bavsaTf.caucion },
-  ];
-  return campos.filter(c => c.importe != null).map(c => ({ ...c, razon: 'Carga manual', filas: 1 }));
+  // Trade Food: el modal muestra los componentes del Saldo BAVSA = Tenencia
+  // − Caución (ver getBavsaSaldoTf) — Garantía y Disponible Caución no entran
+  // acá, son los otros 2 datos de la sección BAVSA de Modo B, usados para el
+  // "Cupo disponible caución" calculado (otra cuenta, no este número).
+  const { tenencia, caucion } = _bavsaTf;
+  const items = [];
+  if (tenencia != null) items.push({ cliente: 'Tenencia', razon: 'Carga manual', filas: 1, importe: tenencia });
+  if (caucion != null) items.push({ cliente: 'Caución', razon: 'Carga manual (resta)', filas: 1, importe: -caucion });
+  return items;
 }
 function getFondosDetalle(co){
   if (co !== 'tfc') return [];
