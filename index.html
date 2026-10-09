@@ -9,7 +9,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Teko:wght@500;600;700&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/style.css?v=11">
+<link rel="stylesheet" href="css/style.css?v=12">
 </head>
 <body>
 <div class="page">
@@ -216,10 +216,11 @@
             <div class="kpi kpi-click" onclick="verKpi('tf','desc')"><div class="kpi-label">Acuerdos descubierto ↗</div><div class="kpi-value" id="kpi-tf-desc">—</div></div>
             <div class="kpi accent kpi-click" onclick="verKpi('tf','disp')"><div class="kpi-label">Disponible para operar ↗</div><div class="kpi-value" id="kpi-tf-disp">—</div><div class="kpi-sub" id="kpi-tf-disp-sub"></div></div>
           </div>
-          <div class="kpi-row">
+          <div class="kpi-row kpi-row-4">
             <div class="kpi kpi-click" onclick="verKpi('tf','cartera')"><div class="kpi-label">Cartera cheques ↗</div><div class="kpi-value pos" id="kpi-tf-cartera">—</div><div class="kpi-sub" id="kpi-tf-nchq">—</div></div>
             <div class="kpi kpi-click" onclick="verKpi('tf','emitidos')"><div class="kpi-label">Chq emitidos (total) ↗</div><div class="kpi-value neg" id="kpi-tf-emitidos">—</div><div class="kpi-sub" id="kpi-tf-nemitidos">—</div></div>
             <div class="kpi kpi-click" onclick="verKpi('tf','cpagar')"><div class="kpi-label">Cuentas a pagar ↗</div><div class="kpi-value neg" id="kpi-tf-cpagar">—</div><div class="kpi-sub" id="kpi-tf-ncpagar">—</div></div>
+            <div class="kpi kpi-click" onclick="verKpi('tf','bavsa')"><div class="kpi-label">Saldo BAVSA ↗</div><div class="kpi-value" id="kpi-tf-bavsa">—</div><div class="kpi-sub">Títulos + Custodia + Cupo + Caución</div></div>
           </div>
         </div>
 
@@ -404,8 +405,9 @@
       <div class="leeme-flow">Saldo bancos <span class="arrow">+</span> Acuerdos descubierto <span class="arrow">=</span> Disponible para operar</div>
       <p>Es un cálculo, no una fuente nueva. El texto chico de abajo ("Desc. usado: …") solo aparece cuando el saldo de bancos es negativo, y muestra cuánto del descubierto ya está siendo usado.</p>
 
-      <h3>Saldo BAVSA (solo TF Carnes)</h3>
-      <p>También sale del Sheet "Reporte Tesorería" — es la fila del banco "BAVSA" ahí adentro, no una fuente separada. Trade Food no opera con BAVSA, por eso no tiene esta tarjeta.</p>
+      <h3>Saldo BAVSA</h3>
+      <p><strong>TF Carnes</strong>: sale del Sheet "Reporte Tesorería" — es la fila del banco "BAVSA" ahí adentro, no una fuente separada.
+      <strong>Trade Food</strong>: es un BAVSA distinto (no es un banco con saldo en el Sheet) — acá es la <strong>suma de los 4 montos manuales</strong> de la sección BAVSA de Modo B (Títulos + Cheques en custodia + Cupo Caución + Caución tomada, ver ④). Clickeando la tarjeta se abre el detalle de los 4 montos que la componen.</p>
 
       <h3>Fondos disponibles (solo TF Carnes)</h3>
       <div class="leeme-flow">Cartera cheques <span class="arrow">+</span> Saldo BAVSA <span class="arrow">=</span> Fondos disponibles</div>
@@ -456,7 +458,7 @@
           <tr><td>Saldo Financiera <em>(solo TF Carnes)</em></td><td>Mismo Sheet "resumen" — la fila cuyo label (columna A) contiene "financiera" (hoy es la fila 6, pero se busca por texto, no por número de fila, para no depender de que nadie reordene filas arriba). Trade Food no tiene esta fila.</td></tr>
           <tr><td>Total equiv. pesos</td><td>Pesos + Cheques + (Dólares × la cotización que vos cargás arriba, si la cargaste) + Saldo Financiera (solo TF Carnes) — a pedido tuyo.</td></tr>
           <tr><td>Total compromisos (Vencido / 7 / 15 / Más15)</td><td><strong>Excel manual</strong> que subís en esta misma pestaña ("Subir compromisos" de Modo B) — reutiliza el mismo lector que Cuentas a pagar, pero es un archivo distinto.</td></tr>
-          <tr><td>BAVSA — Títulos / Cheques en custodia / Cupo Caución / Caución tomada <em>(solo Trade Food)</em></td><td><strong>Carga manual</strong> — no vienen de ningún Sheet ni Excel, no hay forma de leerlos automáticamente. Quedan guardados en este navegador (no en Supabase, así que no viajan a otra computadora). No afectan ningún total de Cash Flow ni de Resumen de Posición — son solo para consulta.</td></tr>
+          <tr><td>BAVSA — Títulos / Cheques en custodia / Cupo Caución / Caución tomada <em>(solo Trade Food)</em></td><td><strong>Carga manual</strong> — no vienen de ningún Sheet ni Excel, no hay forma de leerlos automáticamente. Quedan guardados en este navegador (no en Supabase, así que no viajan a otra computadora). La <strong>suma de los 4</strong> es la tarjeta "Saldo BAVSA ↗" de Cash Flow Proyectado (①) y la fila "BAVSA" de Trade Food en Resumen de Posición (⑤) — en ningún lado entra todavía en ningún total, son solo para consulta (avisame si querés que la suma afecte la Posición Modo A).</td></tr>
         </tbody>
       </table>
 
@@ -467,7 +469,7 @@
         <thead><tr><th>Fila</th><th>De dónde sale</th></tr></thead>
         <tbody>
           <tr><td>Bancos</td><td>Mismo número que "Saldo bancos" de la franja de KPIs (①).</td></tr>
-          <tr><td>BAVSA</td><td>Solo TF Carnes: mismo número que "Saldo BAVSA" de la franja de KPIs (①) — Trade Food no tiene ese banco, así que queda "—".</td></tr>
+          <tr><td>BAVSA</td><td>Mismo número que la tarjeta "Saldo BAVSA" de la franja de KPIs (①), para las dos empresas — en TF Carnes es el banco BAVSA; en Trade Food es la suma de los 4 montos manuales de BAVSA (④). Solo TF Carnes lo suma al total de Posición Modo A (ver nota al pie); en Trade Food es informativo.</td></tr>
           <tr><td>Cheques emitidos</td><td>Mismo número que "Chq emitidos (total)" (①).</td></tr>
           <tr><td>Cuentas a pagar</td><td>Mismo número que "Cuentas a pagar" (①).</td></tr>
           <tr><td>Cheques en cartera</td><td>Mismo número que "Cartera cheques" (①).</td></tr>
@@ -674,6 +676,6 @@
 </script>
 
 <script src="js/app.js?v=1"></script>
-<script src="js/app-patches.js?v=11"></script>
+<script src="js/app-patches.js?v=12"></script>
 </body>
 </html>

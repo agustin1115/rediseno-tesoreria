@@ -44,16 +44,42 @@ const _bavsaTf = { titulos: null, custodia: null, cupo: null, caucion: null };
   } catch(e){}
 })();
 function saveBavsaTf(){ try{ localStorage.setItem('cf_bavsa_tf_v1', JSON.stringify(_bavsaTf)); }catch(e){} }
+
+// Saldo BAVSA (Trade Food) = suma de los 4 montos manuales. null solo si
+// no se cargó ninguno todavía (para mostrar "—" en vez de "0").
+function getBavsaSaldoTf(){
+  const { titulos, custodia, cupo, caucion } = _bavsaTf;
+  if (titulos == null && custodia == null && cupo == null && caucion == null) return null;
+  return (titulos||0) + (custodia||0) + (cupo||0) + (caucion||0);
+}
+// Actualiza solo la tarjeta KPI "Saldo BAVSA" de Trade Food (Cash Flow
+// Proyectado) — separada de renderResumen() a propósito: esta se llama
+// también en la precarga inicial del script, ANTES de que _cobCache (más
+// abajo en este archivo) esté inicializado, y renderResumen() lo necesita.
+function renderBavsaTfKpi(){
+  const el = document.getElementById('kpi-tf-bavsa');
+  if (el) {
+    const v = getBavsaSaldoTf();
+    el.textContent = (v != null) ? fN(v) : '—';
+  }
+}
 function setBavsaTf(campo, value){
   const n = parseFloat(value);
   _bavsaTf[campo] = Number.isFinite(n) ? n : null;
   saveBavsaTf();
+  renderBavsaTfKpi();
+  // Acá sí es seguro llamar a renderResumen() (que también muestra el
+  // Saldo BAVSA, en la fila BAVSA/columna Trade Food): esto solo corre
+  // cuando el usuario toca un input, mucho después de que el script
+  // terminó de cargar por completo.
+  renderResumen();
 }
 // Precarga los inputs con lo guardado (mismo criterio que la cotización de arriba).
 Object.entries({ titulos: 'bavsa-tf-titulos', custodia: 'bavsa-tf-custodia', cupo: 'bavsa-tf-cupo', caucion: 'bavsa-tf-caucion' }).forEach(([campo, id]) => {
   const el = document.getElementById(id);
   if (el && _bavsaTf[campo] != null) el.value = _bavsaTf[campo];
 });
+renderBavsaTfKpi();
 
 // "Total compromisos" de Modo B: Vencido+Próx.7+Próx.15+Más15 de los
 // compromisos subidos en "Subir compromisos" de Modo B (st[co].modoB.provRaw)
@@ -544,7 +570,7 @@ function renderResumen(){
     // (suma o resta según su propio signo) — a pedido tuyo.
     bodyHtml = `
       ${row('Bancos', bancosTfc, bancosTf)}
-      ${row('BAVSA', bavsaTfc || null, null)}
+      ${row('BAVSA', bavsaTfc || null, getBavsaSaldoTf())}
       ${row('Cheques emitidos', emitidosTfc ? -emitidosTfc : null, emitidosTf ? -emitidosTf : null)}
       ${row('Cuentas a pagar', cpagarTfc ? -cpagarTfc : null, cpagarTf ? -cpagarTf : null)}
       ${row('Cheques en cartera', carteraTfc || null, carteraTf || null)}
@@ -561,10 +587,13 @@ function renderResumen(){
         <td class="rs-val rs-total tf-col ${cls(totalATf)}">${fmt(totalATf)}</td>
       </tr>`;
     footHtml = `Modo A (TF Carnes) = Bancos + BAVSA − Cheques emitidos − Cuentas a pagar + Cheques en cartera + Cobrar + Incobrables + Posición Modo B.
-      Modo A (Trade Food) = Bancos − Cheques emitidos − Cuentas a pagar + Cheques en cartera + Cobrar + Incobrables (sin BAVSA ni Posición Modo B,
-      que son solo TF Carnes). Acá "Cobrar" e "Incobrables" son solo Archivo A de TFcobranzas (en Modo B, ambos son solo Archivo B) — a pedido
-      tuyo, nunca sumados entre archivos. Tocá el nombre "Incobrables" para activarlo/desactivarlo del total. "Posición Modo B" se suma tal cual
-      da (puede ser negativo, en cuyo caso resta) — a pedido tuyo. "Movidas (a Financiera)" ya no está acá — se movió a Modo B.`;
+      Modo A (Trade Food) = Bancos − Cheques emitidos − Cuentas a pagar + Cheques en cartera + Cobrar + Incobrables ("Posición Modo B" es solo
+      TF Carnes, acá no suma nada). La fila "BAVSA" en Trade Food es la suma de los 4 montos manuales de la sección BAVSA de Modo B (Títulos +
+      Cheques en custodia + Cupo Caución + Caución tomada) — es un BAVSA distinto del banco de TF Carnes, y por ahora es solo informativo:
+      no entra en la Posición Modo A de Trade Food (avisame si querés que sume). Acá "Cobrar" e "Incobrables" son solo Archivo A de TFcobranzas
+      (en Modo B, ambos son solo Archivo B) — a pedido tuyo, nunca sumados entre archivos. Tocá el nombre "Incobrables" para activarlo/
+      desactivarlo del total. "Posición Modo B" se suma tal cual da (puede ser negativo, en cuyo caso resta) — a pedido tuyo. "Movidas (a
+      Financiera)" ya no está acá — se movió a Modo B.`;
   } else {
     // Modo B: la "posición" parte de lo disponible en Modo B (caja), no del
     // saldo bancario — el resto de los ajustes es el mismo criterio que Modo A.
@@ -700,10 +729,20 @@ function getCarteraDetalle(co){
     .sort((a, b) => b.importe - a.importe);
 }
 function getBavsaDetalle(co){
-  if (co !== 'tfc') return [];
-  const bv = tfcOpBancos().bavsa;
-  if (!bv) return [];
-  return [{ cliente: bv.nombre, razon: `Acuerdo: ${fN(bv.acuerdo || 0)}`, filas: 1, importe: bv.saldo || 0 }];
+  // TF Carnes: BAVSA es un banco más del Sheet "Reporte Tesorería".
+  if (co === 'tfc') {
+    const bv = tfcOpBancos().bavsa;
+    if (!bv) return [];
+    return [{ cliente: bv.nombre, razon: `Acuerdo: ${fN(bv.acuerdo || 0)}`, filas: 1, importe: bv.saldo || 0 }];
+  }
+  // Trade Food: BAVSA son los 4 montos de carga manual (sección BAVSA de Modo B).
+  const campos = [
+    { cliente: 'Títulos', importe: _bavsaTf.titulos },
+    { cliente: 'Cheques en custodia', importe: _bavsaTf.custodia },
+    { cliente: 'Cupo Caución', importe: _bavsaTf.cupo },
+    { cliente: 'Caución tomada', importe: _bavsaTf.caucion },
+  ];
+  return campos.filter(c => c.importe != null).map(c => ({ ...c, razon: 'Carga manual', filas: 1 }));
 }
 function getFondosDetalle(co){
   if (co !== 'tfc') return [];

@@ -99,6 +99,7 @@ button{font-family:inherit}
 /* ═══ KPI STRIP (misma clases, redefinidas al nuevo lenguaje) ═══════ */
 .kpi-block{background:var(--surface);border:1px solid var(--border);border-top:none;overflow:hidden}
 .kpi-row{display:grid;grid-template-columns:repeat(3,minmax(0,1fr))}
+.kpi-row.kpi-row-4{grid-template-columns:repeat(4,minmax(0,1fr))}
 .kpi-row.kpi-row-5{grid-template-columns:repeat(5,minmax(0,1fr))}
 .kpi-row+.kpi-row{border-top:1px solid var(--border-soft)}
 .kpi{padding:13px 16px;border-right:1px solid var(--border-soft);min-width:0}
@@ -484,7 +485,7 @@ tr.rs-row-off td{text-decoration:line-through}
 
   /* KPIs: 2 columnas en vez de 3/5 — así el número entra entero, sin "..."
      (antes .kpi-value truncaba con ellipsis y se perdían cifras enteras). */
-  .kpi-row,.kpi-row.kpi-row-5{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .kpi-row,.kpi-row.kpi-row-4,.kpi-row.kpi-row-5{grid-template-columns:repeat(2,minmax(0,1fr))}
   .kpi{padding:11px 12px}
   .kpi-value{font-size:19px;white-space:normal;overflow:visible;text-overflow:clip;overflow-wrap:break-word}
   .kpi-label{font-size:9.5px}
