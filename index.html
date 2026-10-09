@@ -238,8 +238,8 @@
     </div>
 
     <!-- BAVSA (Trade Food): 4 montos de carga manual, no vienen de ningún
-         Sheet/Excel — se guardan en este navegador (localStorage, persiste
-         entre reinicios pero no sincroniza a otro dispositivo/navegador). -->
+         Sheet/Excel — sincronizan en la nube (Supabase, tabla "bavsa_tf"),
+         así cualquiera que abra el link ve los mismos valores. -->
     <div class="mb-section section-card" id="bavsa-section-tf">
       <div class="mb-header">
         <span class="mb-title">🏦 BAVSA</span>
@@ -467,7 +467,7 @@
           <tr><td>Saldo Financiera <em>(solo TF Carnes)</em></td><td>Mismo Sheet "resumen" — la fila cuyo label (columna A) contiene "financiera" (hoy es la fila 6, pero se busca por texto, no por número de fila, para no depender de que nadie reordene filas arriba). Trade Food no tiene esta fila.</td></tr>
           <tr><td>Total equiv. pesos</td><td>Pesos + Cheques + (Dólares × la cotización que vos cargás arriba, si la cargaste) + Saldo Financiera (solo TF Carnes) — a pedido tuyo.</td></tr>
           <tr><td>Total compromisos (Vencido / 7 / 15 / Más15)</td><td><strong>Excel manual</strong> que subís en esta misma pestaña ("Subir compromisos" de Modo B) — reutiliza el mismo lector que Cuentas a pagar, pero es un archivo distinto.</td></tr>
-          <tr><td>BAVSA — Tenencia / Garantía / Caución / Disponible Caución <em>(solo Trade Food)</em></td><td><strong>Carga manual</strong> — no vienen de ningún Sheet ni Excel, no hay forma de leerlos automáticamente. Quedan guardados en este navegador (localStorage: persiste entre reinicios de la máquina/navegador, pero no viaja a otra computadora ni a otro navegador — no es Supabase). <strong>Tenencia − Caución</strong> es la tarjeta "Saldo BAVSA ↗" de Cash Flow Proyectado (①) y la fila "BAVSA" de Trade Food en Resumen de Posición (⑤) — y, a pedido tuyo, también suma a la Posición Modo A de Trade Food (ver ⑤). Garantía y Disponible Caución no entran en ese número: arman el "Cupo disponible caución" calculado de la misma sección (70% × (Tenencia − Garantía) − Caución), que es solo para consulta y no suma a ningún total.</td></tr>
+          <tr><td>BAVSA — Tenencia / Garantía / Caución / Disponible Caución <em>(solo Trade Food)</em></td><td><strong>Carga manual</strong> — no vienen de ningún Sheet ni Excel, no hay forma de leerlos automáticamente. A pedido tuyo, <strong>sincronizan en la nube</strong> (Supabase, tabla "bavsa_tf") — cualquiera que abra el link ve los mismos 4 valores, no hace falta cargarlos de nuevo en cada navegador (localStorage sigue existiendo como caché local, para que no se vea vacío mientras llega la respuesta de la nube). <strong>Tenencia − Caución</strong> es la tarjeta "Saldo BAVSA ↗" de Cash Flow Proyectado (①) y la fila "BAVSA" de Trade Food en Resumen de Posición (⑤) — y, a pedido tuyo, también suma a la Posición Modo A de Trade Food (ver ⑤). Garantía y Disponible Caución no entran en ese número: arman el "Cupo disponible caución" calculado de la misma sección (70% × (Tenencia − Garantía) − Caución), que es solo para consulta y no suma a ningún total.</td></tr>
         </tbody>
       </table>
 
@@ -537,6 +537,7 @@
           <tr><td>Excel "Compromisos" (Financiera, solo TFC)</td><td>Efectivo a entregar, Costo financiero</td></tr>
           <tr><td>Excel "Compromisos" (Modo B)</td><td>Buckets de Total compromisos en Modo B</td></tr>
           <tr><td>Cotización USD (la tipeás vos)</td><td>Conversión de Dólares en caja</td></tr>
+          <tr><td>BAVSA Trade Food (la cargás vos, sincroniza en la nube)</td><td>Tenencia/Garantía/Caución/Disponible Caución</td></tr>
           <tr><td>Cálculo (no tiene fuente propia)</td><td>Disponible para operar, Fondos disponibles, Saldo fin/Disponible del Cash Flow, ambas Posición (Modo A y B)</td></tr>
         </tbody>
       </table>
@@ -686,6 +687,6 @@
 </script>
 
 <script src="js/app.js?v=1"></script>
-<script src="js/app-patches.js?v=16"></script>
+<script src="js/app-patches.js?v=17"></script>
 </body>
 </html>

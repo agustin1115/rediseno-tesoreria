@@ -33,15 +33,18 @@ function setModoBCotizacion(co, value){
 // ── BAVSA (Trade Food): 4 montos de carga manual (Tenencia, Garantía,
 // Caución, Disponible Caución) — no vienen de ningún Sheet ni Excel, es
 // información que no se puede leer de ningún lado automático, así que se
-// cargan a mano y quedan guardados en ESTE NAVEGADOR (localStorage — persiste
-// entre reinicios de la máquina/navegador, pero no sincroniza a otro
-// dispositivo/navegador distinto; si lo abrís desde otro lado vas a verlo
-// vacío, eso es esperable, no es que se borró). El "Saldo BAVSA" que se
-// muestra en la tarjeta KPI de Cash Flow y en la fila BAVSA de Resumen de
-// Posición (y que suma a la Posición Modo A de Trade Food) es Tenencia −
-// Caución (getBavsaSaldoTf(), más abajo) — Garantía y Disponible Caución NO
-// entran ahí, son los otros 2 datos que arman el "Cupo disponible caución"
-// calculado (getBavsaCupoDispTf()): 70% × (Tenencia − Garantía) − Caución.
+// cargan a mano. A pedido tuyo, sincronizan en la nube (tabla "bavsa_tf" de
+// Supabase, 1 sola fila) — así cualquiera que abra el link ve los mismos 4
+// valores que cargaste vos, no hace falta volver a cargarlos en cada
+// navegador. localStorage (cf_bavsa_tf_v2) sigue existiendo como caché local
+// (para que no "parpadee" vacío mientras llega la respuesta de Supabase),
+// pero la nube manda: al cargar la página se pisa lo local con lo que haya
+// en la nube. El "Saldo BAVSA" que se muestra en la tarjeta KPI de Cash Flow
+// y en la fila BAVSA de Resumen de Posición (y que suma a la Posición Modo A
+// de Trade Food) es Tenencia − Caución (getBavsaSaldoTf(), más abajo) —
+// Garantía y Disponible Caución NO entran ahí, son los otros 2 datos que
+// arman el "Cupo disponible caución" calculado (getBavsaCupoDispTf()): 70% ×
+// (Tenencia − Garantía) − Caución.
 const _bavsaTf = { tenencia: null, garantia: null, caucion: null, disponibleCaucion: null };
 (function loadBavsaTf(){
   try {
@@ -63,6 +66,47 @@ const _bavsaTf = { tenencia: null, garantia: null, caucion: null, disponibleCauc
   } catch(e){}
 })();
 function saveBavsaTf(){ try{ localStorage.setItem('cf_bavsa_tf_v2', JSON.stringify(_bavsaTf)); }catch(e){} }
+
+// Sube los 4 montos a la nube (tabla "bavsa_tf", 1 sola fila con id=1) —
+// se llama cada vez que el usuario carga/cambia un campo. Si falla (sin
+// internet, etc.) el dato sigue guardado local (saveBavsaTf ya corrió antes).
+async function syncBavsaTfToSupabase(){
+  try {
+    const { error } = await sb.from('bavsa_tf').upsert({
+      id: 1,
+      tenencia: _bavsaTf.tenencia,
+      garantia: _bavsaTf.garantia,
+      caucion: _bavsaTf.caucion,
+      disponible_caucion: _bavsaTf.disponibleCaucion,
+      updated_at: new Date().toISOString(),
+    });
+    if (error) throw error;
+  } catch(e) {
+    console.warn('[Supabase] No se pudo guardar BAVSA Trade Food en la nube (queda guardado solo en este navegador):', e.message);
+  }
+}
+// Trae lo que haya en la nube al cargar la página — pisa el caché local si
+// hay datos ahí (la nube es la fuente de verdad, para que todos vean lo
+// mismo). Si todavía no hay fila en Supabase (primera vez), sube lo que ya
+// tenías cargado localmente como punto de partida, en vez de perderlo.
+(async function hydrateBavsaTfFromSupabase(){
+  try {
+    const { data, error } = await sb.from('bavsa_tf').select('*').eq('id', 1).maybeSingle();
+    if (error) throw error;
+    if (data) {
+      _bavsaTf.tenencia = data.tenencia;
+      _bavsaTf.garantia = data.garantia;
+      _bavsaTf.caucion = data.caucion;
+      _bavsaTf.disponibleCaucion = data.disponible_caucion;
+      saveBavsaTf();
+      refreshBavsaTfUi();
+    } else {
+      syncBavsaTfToSupabase();
+    }
+  } catch(e) {
+    console.warn('[Supabase] No se pudo sincronizar BAVSA Trade Food, se usa el caché local:', e.message);
+  }
+})();
 
 // Saldo BAVSA (Trade Food) = Tenencia − Caución. null solo si no se cargó
 // ninguno de los dos todavía (para mostrar "—" en vez de "0").
@@ -99,10 +143,23 @@ function renderBavsaCupoDispTf(){
     el.className = 'mb-kpi-value' + (v == null ? '' : v >= 0 ? ' pos' : ' neg');
   }
 }
+// Refresca los 4 inputs + KPI + marquito + Resumen con lo que haya en
+// _bavsaTf — se usa tanto en la precarga inicial como cuando llega la
+// respuesta de Supabase (hydrateBavsaTfFromSupabase).
+function refreshBavsaTfUi(){
+  Object.entries({ tenencia: 'bavsa-tf-tenencia', garantia: 'bavsa-tf-garantia', caucion: 'bavsa-tf-caucion', disponibleCaucion: 'bavsa-tf-disp-caucion' }).forEach(([campo, id]) => {
+    const el = document.getElementById(id);
+    if (el) el.value = (_bavsaTf[campo] != null) ? _bavsaTf[campo] : '';
+  });
+  renderBavsaTfKpi();
+  renderBavsaCupoDispTf();
+  renderResumen();
+}
 function setBavsaTf(campo, value){
   const n = parseFloat(value);
   _bavsaTf[campo] = Number.isFinite(n) ? n : null;
   saveBavsaTf();
+  syncBavsaTfToSupabase();
   renderBavsaTfKpi();
   renderBavsaCupoDispTf();
   // Acá sí es seguro llamar a renderResumen() (que también muestra el
@@ -111,7 +168,9 @@ function setBavsaTf(campo, value){
   // terminó de cargar por completo.
   renderResumen();
 }
-// Precarga los inputs con lo guardado (mismo criterio que la cotización de arriba).
+// Precarga los inputs con lo guardado localmente (mismo criterio que la
+// cotización de arriba) — se vuelve a correr con renderBavsaTfKpi/
+// renderBavsaCupoDispTf cuando llegue la respuesta de Supabase, si trae algo.
 Object.entries({ tenencia: 'bavsa-tf-tenencia', garantia: 'bavsa-tf-garantia', caucion: 'bavsa-tf-caucion', disponibleCaucion: 'bavsa-tf-disp-caucion' }).forEach(([campo, id]) => {
   const el = document.getElementById(id);
   if (el && _bavsaTf[campo] != null) el.value = _bavsaTf[campo];
@@ -123,11 +182,11 @@ renderBavsaCupoDispTf();
 // A veces hay un cheque real en cartera que no viene ni del Excel del banco
 // ni del Sheet de físicos (llegó por otro medio, se traspapeló el archivo,
 // etc.) — el botón "+ Agregar cheque" de la pestaña Cartera de Cheques deja
-// cargarlo a mano, con las mismas columnas que ya tiene la tabla. Igual que
-// BAVSA (Trade Food), vive solo en este navegador — se guarda aparte en
-// localStorage (no en `${co}_cheques_v2`) para que no se pierda cuando se
-// vuelve a subir el Excel del banco (ese array se reemplaza entero en cada
-// subida).
+// cargarlo a mano, con las mismas columnas que ya tiene la tabla. Vive solo
+// en este navegador (no sincroniza en la nube como BAVSA) — se guarda
+// aparte en localStorage (no en `${co}_cheques_v2`) para que no se pierda
+// cuando se vuelve a subir el Excel del banco (ese array se reemplaza
+// entero en cada subida).
 let _manualChqs = [];
 let _manualChqId = 0;
 (function loadManualChqs(){
