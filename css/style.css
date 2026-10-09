@@ -463,6 +463,11 @@ tr.rs-row-off td{text-decoration:line-through}
 .btn-rm-man:hover{color:var(--bad)}
 .ov-note{font-size:10px;color:var(--ink-faint);margin-top:4px}
 
+.btn-add-chq{font-size:11px;padding:5px 11px;border:1px solid var(--tfc-primary);border-radius:6px;background:var(--tfc-primary);color:#fff;cursor:pointer;font-family:inherit;font-weight:600}
+.btn-add-chq:hover{filter:brightness(.92)}
+.man-form-chq{grid-template-columns:repeat(4,minmax(0,1fr))}
+@media (max-width:860px){ .man-form-chq{grid-template-columns:repeat(2,minmax(0,1fr))} }
+
 /* ═══ MOBILE (celular, ~640px y menos) ═══════════════════════════════ */
 @media (max-width:640px){
   .page{padding-top:14px}

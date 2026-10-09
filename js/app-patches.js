@@ -82,6 +82,98 @@ Object.entries({ titulos: 'bavsa-tf-titulos', custodia: 'bavsa-tf-custodia', cup
 });
 renderBavsaTfKpi();
 
+// ── Cheques cargados a mano en "Cartera de Cheques" ─────────────────
+// A veces hay un cheque real en cartera que no viene ni del Excel del banco
+// ni del Sheet de físicos (llegó por otro medio, se traspapeló el archivo,
+// etc.) — el botón "+ Agregar cheque" de la pestaña Cartera de Cheques deja
+// cargarlo a mano, con las mismas columnas que ya tiene la tabla. Igual que
+// BAVSA (Trade Food), vive solo en este navegador — se guarda aparte en
+// localStorage (no en `${co}_cheques_v2`) para que no se pierda cuando se
+// vuelve a subir el Excel del banco (ese array se reemplaza entero en cada
+// subida).
+let _manualChqs = [];
+let _manualChqId = 0;
+(function loadManualChqs(){
+  try {
+    const raw = localStorage.getItem('cf_cheques_manual_v1');
+    if (raw) {
+      _manualChqs = JSON.parse(raw);
+      _manualChqId = _manualChqs.reduce((max, m) => Math.max(max, m.id || 0), 0);
+    }
+  } catch(e){}
+})();
+function saveManualChqs(){ try{ localStorage.setItem('cf_cheques_manual_v1', JSON.stringify(_manualChqs)); }catch(e){} }
+
+function openAddChqPanel(){
+  document.getElementById('ov-title').textContent = '+ Agregar cheque a cartera';
+  renderAddChqPanelBody();
+  document.getElementById('ov-overlay').classList.add('open');
+  document.getElementById('ov-panel').classList.add('open');
+}
+function renderAddChqPanelBody(){
+  const coSel = document.getElementById('df-empresa');
+  const co = (coSel && coSel.value) || 'tfc';
+  let html = `<div class="man-section" style="flex:1;border-top:none">
+    <div class="man-sec-hdr">Cargar cheque a mano</div>
+    <div class="man-form man-form-chq">
+      <select id="chq-man-co">
+        <option value="tfc" ${co==='tfc'?'selected':''}>TF Carnes</option>
+        <option value="tf" ${co==='tf'?'selected':''}>Trade Food</option>
+      </select>
+      <input type="text" id="chq-man-numero" placeholder="N° Cheque">
+      <input type="text" id="chq-man-recibido" placeholder="Recibido de">
+      <input type="text" id="chq-man-librador" placeholder="Librador">
+      <input type="text" id="chq-man-cuit" placeholder="CUIT">
+      <input type="date" id="chq-man-fecha">
+      <input type="number" id="chq-man-importe" placeholder="Importe" step="1" min="0">
+      <button class="btn-add-man" onclick="addManualChq()">+ Agregar</button>
+    </div>
+    <p class="ov-note">Se guarda en este navegador y aparece en la tabla de Cartera de Cheques junto con el resto — se puede adjudicar/restaurar igual que un cheque subido por Excel.</p>`;
+
+  const mine = [..._manualChqs].sort((a,b) => (a.fecha||'').localeCompare(b.fecha||''));
+  if (mine.length) {
+    html += `<div style="margin-top:12px;border:1px solid #eee;border-radius:6px;overflow:hidden">`;
+    for (const m of mine) {
+      const fechaStr = m.fecha ? fDateShort(new Date(m.fecha+'T00:00:00')) : '—';
+      html += `<div class="man-list-item">
+        <span class="man-d">${coBadge(m.co)}</span>
+        <span class="man-d">${fechaStr}</span>
+        <span class="man-l" title="${m.librador||''} · #${m.numero||''}">${m.librador||m.recibidoDe||'—'} · #${m.numero||'—'}</span>
+        <span class="man-a">${fN(m.importe)}</span>
+        <button class="btn-rm-man" onclick="deleteManualChq(${m.id})" title="Eliminar">×</button>
+      </div>`;
+    }
+    html += `</div>`;
+  } else {
+    html += `<div style="margin-top:16px;text-align:center;color:#ccc;font-size:11px;padding:20px">Sin cheques cargados a mano todavía.</div>`;
+  }
+  html += `</div>`;
+  document.getElementById('ov-body').innerHTML = html;
+}
+function addManualChq(){
+  const co = document.getElementById('chq-man-co').value;
+  const numero = document.getElementById('chq-man-numero').value.trim();
+  const recibidoDe = document.getElementById('chq-man-recibido').value.trim();
+  const librador = document.getElementById('chq-man-librador').value.trim();
+  const cuit = document.getElementById('chq-man-cuit').value.trim();
+  const fecha = document.getElementById('chq-man-fecha').value;
+  const importe = parseFloat(document.getElementById('chq-man-importe').value);
+  if (!fecha || isNaN(importe) || importe <= 0) { alert('Completá al menos la fecha de cobro y el importe.'); return; }
+  _manualChqs.push({ id: ++_manualChqId, co, numero, recibidoDe, librador, cuit, fecha, importe });
+  saveManualChqs();
+  ['chq-man-numero','chq-man-recibido','chq-man-librador','chq-man-cuit','chq-man-fecha','chq-man-importe'].forEach(id => {
+    document.getElementById(id).value = '';
+  });
+  renderAddChqPanelBody();
+  renderAll();
+}
+function deleteManualChq(id){
+  _manualChqs = _manualChqs.filter(m => m.id !== id);
+  saveManualChqs();
+  renderAddChqPanelBody();
+  renderAll();
+}
+
 // "Total compromisos" de Modo B: Vencido+Próx.7+Próx.15+Más15 de los
 // compromisos subidos en "Subir compromisos" de Modo B (st[co].modoB.provRaw)
 // — un archivo distinto de "Cuentas a pagar" (st[co].provRaw). Se usa tanto
@@ -707,6 +799,10 @@ function getCarteraTotal(co){
     const id = chqStableId(co, 'f', r.numero, r.importe || 0);
     if (!excl[co].chq.has(id)) total += r.importe || 0;
   });
+  (_manualChqs || []).filter(m => m.co === co).forEach(m => {
+    const id = `${co}_man_${m.id}`;
+    if (!excl[co].chq.has(id)) total += m.importe || 0;
+  });
   return total;
 }
 function getCarteraDetalle(co){
@@ -725,10 +821,204 @@ function getCarteraDetalle(co){
     const id = chqStableId(co, 'f', r.numero, r.importe || 0);
     if (!excl[co].chq.has(id)) add(r.razonSocial || r.recibidoDe, r.importe || 0);
   });
+  (_manualChqs || []).filter(m => m.co === co).forEach(m => {
+    const id = `${co}_man_${m.id}`;
+    if (!excl[co].chq.has(id)) add(m.librador || m.recibidoDe, m.importe || 0);
+  });
   return [...map.values()]
     .map(v => ({ ...v, razon: `${v.filas} cheque${v.filas > 1 ? 's' : ''}` }))
     .sort((a, b) => b.importe - a.importe);
 }
+
+// getCarteraRows() y renderDetail() (tabla de la pestaña Cartera de Cheques)
+// arman y filtran/ordenan las filas todas dentro de la misma función en
+// app.js, así que no hay forma de "engancharse" a mitad de camino para
+// sumar la fuente "a mano" — se copian completas y se agrega el tercer
+// loop/tag/botón nuevo, mismo criterio que ya se usó para renderModoB.
+getCarteraRows = function(includeExcluded) {
+  const co = document.getElementById('df-empresa').value;
+  const q  = document.getElementById('df-search').value.trim().toLowerCase();
+  const desde = document.getElementById('df-desde').value;
+  const hasta = document.getElementById('df-hasta').value;
+  const today = new Date(); today.setHours(0,0,0,0);
+  const cos = co ? [co] : ['tfc','tf'];
+  let rows = [];
+  for (const c of cos) {
+    const raw = JSON.parse(localStorage.getItem(`${c}_cheques_v2`) || '[]');
+    raw.forEach(r => {
+      const fecha = r.fechaPago ? new Date(r.fechaPago) : null;
+      if (fecha) fecha.setHours(0,0,0,0);
+      const dias = fecha ? Math.round((fecha-today)/(1000*86400)) : null;
+      const _id = chqStableId(c, 'e', r.numero, r.importe||0);
+      const excluido = excl[c].chq.has(_id);
+      rows.push({
+        _id, _co: c, _source: 'electronico', excluido,
+        numero: r.numero||'', librador: r.razonSocial||'',
+        recibidoDe: r.recibidoDe||'',
+        cuit: r.cuitLibrador||r.cuitRecibido||'',
+        fecha, fechaStr: fecha?fDateShort(fecha):'—', dias,
+        importe: r.importe||0
+      });
+    });
+    (st[c].chequesFisicos||[]).forEach(r => {
+      const fecha = r.fechaPago ? new Date(r.fechaPago) : null;
+      if (fecha) fecha.setHours(0,0,0,0);
+      const dias = fecha ? Math.round((fecha-today)/(1000*86400)) : null;
+      const _id = chqStableId(c, 'f', r.numero, r.importe||0);
+      const excluido = excl[c].chq.has(_id);
+      rows.push({
+        _id, _co: c, _source: 'fisico', excluido,
+        numero: r.numero||'', librador: r.razonSocial||'',
+        recibidoDe: r.recibidoDe||'',
+        cuit: r.cuitLibrador||'',
+        fecha, fechaStr: fecha?fDateShort(fecha):'—', dias,
+        importe: r.importe||0
+      });
+    });
+    (_manualChqs||[]).filter(m=>m.co===c).forEach(m => {
+      const fecha = m.fecha ? new Date(m.fecha+'T00:00:00') : null;
+      if (fecha) fecha.setHours(0,0,0,0);
+      const dias = fecha ? Math.round((fecha-today)/(1000*86400)) : null;
+      const _id = `${c}_man_${m.id}`;
+      const excluido = excl[c].chq.has(_id);
+      rows.push({
+        _id, _co: c, _source: 'manual', _manualId: m.id, excluido,
+        numero: m.numero||'', librador: m.librador||'',
+        recibidoDe: m.recibidoDe||'',
+        cuit: m.cuit||'',
+        fecha, fechaStr: fecha?fDateShort(fecha):'—', dias,
+        importe: m.importe||0
+      });
+    });
+  }
+  if (!includeExcluded) rows = rows.filter(r => !r.excluido);
+  if (q) rows = rows.filter(r=>(r.librador+r.recibidoDe+r.numero+r.cuit).toLowerCase().includes(q));
+  if (desde) rows = rows.filter(r=>r.fecha && r.fecha >= new Date(desde));
+  if (hasta) { const h=new Date(hasta); h.setHours(23,59,59); rows=rows.filter(r=>r.fecha&&r.fecha<=h); }
+  const {col,dir} = _dSort;
+  if (col) rows.sort((a,b)=>{
+    let va=a[col],vb=b[col];
+    if(va instanceof Date&&vb instanceof Date) return dir*(va-vb);
+    if(typeof va==='number'&&typeof vb==='number') return dir*(va-vb);
+    return dir*String(va||'').localeCompare(String(vb||''));
+  });
+  else rows.sort((a,b)=>{
+    if(!a.fecha) return 1; if(!b.fecha) return -1; return a.fecha-b.fecha;
+  });
+  return rows;
+};
+
+const _origRenderDetail = renderDetail;
+renderDetail = function() {
+  if (_dTab !== 'cartera') { _origRenderDetail(); return; }
+  const thead = document.getElementById('detail-thead');
+  const tbody = document.getElementById('detail-tbody');
+
+  const rows = getCarteraRows(_showExclChq);
+  const activeRows = rows.filter(r=>!r.excluido);
+  const selRows    = activeRows.filter(r=>_dSel.has(r._id));
+  const allActiveIds = activeRows.map(r=>r._id);
+  const allSel = allActiveIds.length>0 && allActiveIds.every(id=>_dSel.has(id));
+  const selSum = selRows.reduce((s,r)=>s+r.importe,0);
+  const total  = activeRows.reduce((s,r)=>s+r.importe,0);
+  const tfc = activeRows.filter(r=>r._co==='tfc').reduce((s,r)=>s+r.importe,0);
+  const tf  = activeRows.filter(r=>r._co==='tf').reduce((s,r)=>s+r.importe,0);
+  const allExclCount = (()=>{
+    let n=0;
+    for(const c of['tfc','tf']){n+=excl[c].chq.size;}
+    return n;
+  })();
+
+  document.getElementById('df-count').textContent = `${activeRows.length} cheques · $${fN(total)}${allExclCount?` · ${allExclCount} adjudicados`:''}`;
+
+  thead.innerHTML = `<tr>
+    <th class="d-chk"><input type="checkbox" ${allSel?'checked':''} onchange="toggleDSelAll(this.checked,${JSON.stringify(allActiveIds)})"></th>
+    ${thSort('_co','Empresa')}
+    ${thSort('numero','N° Cheque')}
+    ${thSort('recibidoDe','Recibido de')}
+    ${thSort('librador','Librador')}
+    ${thSort('cuit','CUIT')}
+    ${thSort('fecha','Fecha cobro')}
+    ${thSort('dias','Días','r')}
+    ${thSort('importe','Importe','r')}
+    <th></th>
+  </tr>`;
+
+  if (!rows.length) {
+    tbody.innerHTML = `<tr><td colspan="10" class="detail-empty">Sin cheques en cartera. Subí el archivo del banco o cargá uno a mano.</td></tr>`;
+  } else {
+    tbody.innerHTML = rows.map(r=>{
+      const isExcl = r.excluido;
+      const rc = isExcl ? '' : r.dias!==null&&r.dias<0?'overdue-row':r.dias!==null&&r.dias<=7?'soon-row':'';
+      const sel = !isExcl && _dSel.has(r._id);
+      const fisicoTag = r._source==='fisico'?' <span style="font-family:sans-serif;font-size:9px;background:#f3ede0;color:#8a6800;padding:1px 4px;border-radius:3px;font-weight:600;border:1px solid #e0cfa0">físico</span>':'';
+      const manualTag = r._source==='manual'?' <span style="font-family:sans-serif;font-size:9px;background:#eef4ff;color:#2a4d8f;padding:1px 4px;border-radius:3px;font-weight:600;border:1px solid #c2d4f5">a mano</span>':'';
+      const adjTag = isExcl ? ' <span style="font-size:9px;background:#e8f0ff;color:#3355cc;padding:1px 4px;border-radius:3px;font-weight:600;border:1px solid #b3c4f0">adjudicado</span>' : '';
+      const rowStyle = isExcl ? 'style="opacity:.45"' : '';
+      const actionBtn = isExcl
+        ? `<button onclick="restoreChq('${r._id}','${r._co}')" title="Restaurar" style="border:none;background:none;color:#3355cc;cursor:pointer;font-size:12px;padding:0 4px">↩</button>`
+        : (r._source==='manual' ? `<button onclick="deleteManualChq(${r._manualId})" title="Eliminar cheque cargado a mano" style="border:none;background:none;color:#aaa;cursor:pointer;font-size:12px;padding:0 4px">🗑</button>` : '');
+      return `<tr class="${rc}${sel?' dsel-row':''}" ${rowStyle}>
+        <td class="d-chk">${isExcl?'':'<input type="checkbox" '+(sel?'checked':'')+' onchange="toggleDSel(\''+r._id+'\',this.checked)">'}
+        </td>
+        <td>${coBadge(r._co)}</td>
+        <td style="font-family:monospace;font-size:11px">${r.numero||'—'}${fisicoTag}${manualTag}${adjTag}</td>
+        <td style="max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${r.recibidoDe}">${r.recibidoDe||'—'}</td>
+        <td style="max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${r.librador}">${r.librador||'—'}</td>
+        <td style="font-size:10px;color:#aaa">${r.cuit||'—'}</td>
+        <td>${r.fechaStr}</td>
+        <td class="r">${daysBadge(r.dias)}</td>
+        <td class="r" style="font-weight:500">${fN(r.importe)}</td>
+        <td style="text-align:center">${actionBtn}</td>
+      </tr>`;
+    }).join('');
+  }
+
+  const exclToggleBtn = allExclCount
+    ? `<button onclick="toggleShowExcl()" style="margin-left:8px;font-size:10px;padding:2px 8px;border:1px solid #b3c4f0;border-radius:4px;background:${_showExclChq?'#e8f0ff':'#fff'};color:#3355cc;cursor:pointer;font-family:inherit">${_showExclChq?'▲ Ocultar adjudicados':'▼ Ver '+allExclCount+' adjudicados'}</button>`
+    : '';
+  let foot = `<div class="detail-foot">
+    <span>Total: <strong>$${fN(total)}</strong> (${activeRows.length} chq)${exclToggleBtn}</span>`;
+  if (tfc&&tf) foot+=`<span><span class="badge-co-tfc">TFC</span> $${fN(tfc)}</span><span><span class="badge-co-tf">TF</span> $${fN(tf)}</span>`;
+  if (_dSel.size) foot+=`<span style="margin-left:auto;color:#506E3E;font-weight:700">${_dSel.size} seleccionados · $${fN(selSum)}</span>`;
+  foot += '</div>';
+  updateDetailFoot(foot);
+
+  updateDSelBar(selRows.length, selSum, true);
+};
+
+// "+ Agregar cheque" solo tiene sentido en la pestaña Cartera de Cheques.
+const _origSwitchDTab = switchDTab;
+switchDTab = function(tab) {
+  _origSwitchDTab(tab);
+  const btn = document.getElementById('btn-add-chq-manual');
+  if (btn) btn.style.display = (tab === 'cartera') ? '' : 'none';
+};
+
+// La tarjeta "Cartera cheques" de la franja de KPIs recalcula electrónico +
+// físico adentro de renderKPIs() (app.js original) sin contemplar los
+// cargados a mano — se ajusta acá con getCarteraTotal() (ya manual-aware)
+// solo cuando hay alguno activo, para no tocar el comportamiento de
+// siempre si nadie usó "+ Agregar cheque".
+const _origRenderKPIs = renderKPIs;
+renderKPIs = function(co) {
+  _origRenderKPIs(co);
+  const nManualAct = (_manualChqs||[]).filter(m => m.co===co && !excl[co].chq.has(`${co}_man_${m.id}`)).length;
+  if (!nManualAct) return;
+  const total = getCarteraTotal(co);
+  const elCartera = document.getElementById(`kpi-${co}-cartera`);
+  if (elCartera) elCartera.textContent = total>0 ? fN(total) : '—';
+  const elNchq = document.getElementById(`kpi-${co}-nchq`);
+  if (elNchq) elNchq.textContent += ` + ${nManualAct} man.`;
+  if (co === 'tfc') {
+    const eTotal = document.getElementById('kpi-tfc-cartera-total');
+    if (eTotal) {
+      const bv = tfcOpBancos().bavsa;
+      const bavsaSaldo = bv != null ? bv.saldo : 0;
+      eTotal.textContent = fN(total + bavsaSaldo);
+    }
+  }
+};
 function getBavsaDetalle(co){
   // TF Carnes: BAVSA es un banco más del Sheet "Reporte Tesorería".
   if (co === 'tfc') {

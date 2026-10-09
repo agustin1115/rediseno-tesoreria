@@ -9,7 +9,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Teko:wght@500;600;700&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/style.css?v=12">
+<link rel="stylesheet" href="css/style.css?v=13">
 </head>
 <body>
 <div class="page">
@@ -331,6 +331,7 @@
       <label class="df-lbl">Hasta <input class="df-input" id="df-hasta" type="date" onchange="renderDetail()" style="width:130px"></label>
       <button class="btn-df-clear" onclick="clearDFilters()">✕ Limpiar filtros</button>
       <span class="df-count" id="df-count"></span>
+      <button class="btn-add-chq" id="btn-add-chq-manual" onclick="openAddChqPanel()" title="Cargar un cheque a mano">+ Agregar cheque</button>
     </div>
 
     <div class="detail-wrap" id="detail-wrap">
@@ -513,6 +514,7 @@
 
       <h2>⑧ Detalle (Cartera de Cheques / Cuentas a Pagar)</h2>
       <p>Es el listado fila por fila de exactamente los mismos datos que arman "Cartera cheques" y "Cuentas a pagar" de la franja de KPIs (①) — no hay ninguna fuente adicional acá, es el detalle de esos mismos totales, con filtros para buscar por empresa, librador/proveedor o rango de fechas.</p>
+      <p>En Cartera de Cheques, el botón <strong>"+ Agregar cheque"</strong> deja cargar a mano un cheque que no vino ni del Excel del banco ni del Sheet de físicos (empresa, N° cheque, recibido de, librador, CUIT, fecha de cobro e importe — las mismas columnas de la tabla). Aparece en la tabla con una etiqueta <strong>"a mano"</strong>, suma a los mismos totales que el resto (Cartera cheques de la franja de KPIs, Resumen de Posición, Fondos disponibles), y se puede adjudicar/restaurar o borrar igual que cualquier otro cheque. Se guarda solo en este navegador (no sincroniza entre dispositivos).</p>
 
       <h2>Resumen rápido — quién trae cada número</h2>
       <table class="leeme-table">
@@ -676,6 +678,6 @@
 </script>
 
 <script src="js/app.js?v=1"></script>
-<script src="js/app-patches.js?v=13"></script>
+<script src="js/app-patches.js?v=14"></script>
 </body>
 </html>
