@@ -221,7 +221,14 @@ function renderHeader() {
   const wrap = document.getElementById('seg-content');
   const empty = document.getElementById('seg-empty');
   const hasData = _cierres.length > 0;
+  const estabaOculto = wrap && wrap.hidden;
   if (wrap) wrap.hidden = !hasData;
+  // Si #seg-content pasó de hidden a visible recién ahora, forzar un reflow
+  // sincrónico ANTES de que los charts (más abajo, en el mismo renderAll())
+  // midan el tamaño del canvas — si no, Chart.js lo mide todavía con el
+  // layout viejo (display:none) y dibuja en un canvas de 0x0, invisible,
+  // aunque los datos y el resto de la pantalla (KPIs, tablas) sí aparezcan.
+  if (wrap && estabaOculto && hasData) wrap.offsetHeight;
   if (empty) empty.hidden = hasData;
   const hdr = document.getElementById('hdr-ultimo-cierre');
   if (!hdr) return;
