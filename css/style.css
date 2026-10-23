@@ -534,17 +534,33 @@ tr.rs-row-off td{text-decoration:line-through}
 }
 
 /* ═══ PRINT ═══════════════════════════════════════════════════════════ */
+.print-only{display:none}
+
 @media print {
   .topbar,.subbar,.tabbar,.ov-overlay,.detail-filters,.d-chk,
   .detail-tabs button,.btn-dsel-clear,.detail-sel-bar{display:none!important}
   body{background:#fff!important;font-size:11px}
   .page{padding:0;max-width:100%}
-  #co-panel-tfc,#co-panel-tf{display:block!important}
+  /* Solo la empresa activa (switchCoTab ya deja la otra en display:none
+     inline) — antes esto forzaba las DOS, por eso el PDF siempre traía TF
+     Carnes + Trade Food sin importar en qué pestaña estuvieras. */
   .co-header{-webkit-print-color-adjust:exact;print-color-adjust:exact}
   .kpi-block{border:1px solid #ddd!important}
   .cf-table-wrap{max-height:none!important;overflow:visible!important}
   .detail-section{margin-top:12px;border:none}
   .detail-wrap{max-height:none!important;overflow:visible!important}
   thead tr{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  /* La tarjeta de Resumen de Posición normal (2 empresas lado a lado, un
+     solo modo a la vez) se reemplaza en el PDF por #print-resumen (1 sola
+     empresa, los 2 modos) — no tiene sentido mostrar las dos. */
+  #resumen-wrap{display:none!important}
+  .print-only{display:block}
+  #print-resumen{page-break-after:always;padding:8px 2px 0}
+  .print-resumen-title{font-family:'Teko',sans-serif;font-size:22px;font-weight:600;margin:0 0 10px}
+  .print-resumen-tables{display:flex;gap:18px}
+  .print-resumen-table{flex:1;border-collapse:collapse;width:100%}
+  .print-resumen-table caption,.print-resumen-table thead th{text-align:left;font-size:12px;font-weight:700;padding:4px 6px;border-bottom:2px solid #333}
+  .print-resumen-table td{padding:4px 6px;font-size:11px;border-bottom:1px solid #ddd}
+  .print-resumen-table td.rs-val{text-align:right;font-variant-numeric:tabular-nums}
   @page{margin:1.5cm;size:A4 landscape}
 }

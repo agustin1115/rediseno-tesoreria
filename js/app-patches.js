@@ -650,19 +650,11 @@ function toggleIncobrables(modo){
   renderResumen();
 }
 
-function renderResumen(){
-  const tableEl = document.getElementById('resumen-table');
-  if (!tableEl) return;
-
-  const fmt = v => (v == null) ? '—' : fN(v);
-  const cls = v => (v == null) ? '' : (v >= 0 ? 'rs-pos' : 'rs-neg');
-  const row = (label, vTfc, vTf) => `<tr>
-    <td class="rs-label">${label}</td>
-    <td class="rs-val tfc-col ${cls(vTfc)}">${fmt(vTfc)}</td>
-    <td class="rs-val tf-col ${cls(vTf)}">${fmt(vTf)}</td>
-  </tr>`;
-  const secHeader = title => `<tr class="rs-sec-header"><td colspan="3" class="rs-sec-title">${title}</td></tr>`;
-
+// Todo el cálculo de Resumen de Posición (los dos modos, las dos empresas)
+// en un solo lugar — lo usa renderResumen() (tabla en pantalla) y
+// buildResumenPrintTable() (PDF, más abajo), así los dos muestran siempre
+// exactamente los mismos números sin duplicar ninguna fórmula.
+function computeResumen(){
   // Bancos: TF Carnes usa solo los bancos operativos (Galicia/Macro/CMF), igual
   // que la tarjeta "Saldo bancos" de su panel (tfcOpBancos()).
   const opTfc = tfcOpBancos();
@@ -742,6 +734,34 @@ function renderResumen(){
   const totalBTf  = (mbTotalTf ||0) - compromisosBTf  + (cobrarBTf ||0) + (incobrBTf ||0) * incobrablesFactorB;
   const totalATfc = (bancosTfc||0) + bavsaTfc - emitidosTfc - cpagarTfc + carteraTfc + (cobrarATfc||0) + (incobrATfc||0) * incobrablesFactorA + totalBTfc;
   const totalATf  = (bancosTf ||0) - emitidosTf  - cpagarTf  + carteraTf  + (cobrarATf ||0) + (incobrATf ||0) * incobrablesFactorA + (getBavsaSaldoTf()||0);
+
+  return {
+    bancosTfc, bancosTf, bavsaTfc, carteraTfc, carteraTf, emitidosTfc, emitidosTf,
+    cpagarTfc, cpagarTf, compromisosBTfc, compromisosBTf, mbTotalTfc, mbTotalTf,
+    cobrarATfc, cobrarATf, cobrarBTfc, cobrarBTf, incobrATfc, incobrBTfc, incobrATf, incobrBTf,
+    movidasTfc, incobrablesFactorA, incobrablesFactorB, totalBTfc, totalBTf, totalATfc, totalATf,
+  };
+}
+
+function renderResumen(){
+  const tableEl = document.getElementById('resumen-table');
+  if (!tableEl) return;
+
+  const fmt = v => (v == null) ? '—' : fN(v);
+  const cls = v => (v == null) ? '' : (v >= 0 ? 'rs-pos' : 'rs-neg');
+  const row = (label, vTfc, vTf) => `<tr>
+    <td class="rs-label">${label}</td>
+    <td class="rs-val tfc-col ${cls(vTfc)}">${fmt(vTfc)}</td>
+    <td class="rs-val tf-col ${cls(vTf)}">${fmt(vTf)}</td>
+  </tr>`;
+  const secHeader = title => `<tr class="rs-sec-header"><td colspan="3" class="rs-sec-title">${title}</td></tr>`;
+
+  const {
+    bancosTfc, bancosTf, bavsaTfc, carteraTfc, carteraTf, emitidosTfc, emitidosTf,
+    cpagarTfc, cpagarTf, compromisosBTfc, compromisosBTf, mbTotalTfc, mbTotalTf,
+    cobrarATfc, cobrarATf, cobrarBTfc, cobrarBTf, incobrATfc, incobrBTfc, incobrATf, incobrBTf,
+    movidasTfc, incobrablesFactorA, incobrablesFactorB, totalBTfc, totalBTf, totalATfc, totalATf,
+  } = computeResumen();
 
   // Foto de estos números para "Cerrar semana" (ver cerrarSemana() más abajo)
   // — se recalcula cada vez que corre renderResumen(), así siempre está al
@@ -841,6 +861,98 @@ function renderResumen(){
       <tr><td colspan="3" style="font-size:10px;color:#999;padding:8px 14px">${footHtml}</td></tr>
     </tfoot>`;
 }
+
+// ── PDF: primera página = Resumen de Posición de la empresa activa (los 2
+// modos), el resto de las páginas = lo mismo que ves en pantalla para esa
+// empresa — a pedido tuyo. Usa computeResumen() (mismas fórmulas que la
+// tabla en pantalla) pero arma 2 tablas de 1 sola columna (Modo A / Modo B)
+// en vez de 1 tabla de 2 columnas (TFC/TF) con un modo a la vez.
+function buildResumenPrintTable(co){
+  const d = computeResumen();
+  const isTfc = co === 'tfc';
+  const fmt = v => (v == null) ? '—' : fN(v);
+  const cls = v => (v == null) ? '' : (v >= 0 ? 'rs-pos' : 'rs-neg');
+  const row = (label, v) => `<tr><td class="rs-label">${label}</td><td class="rs-val ${cls(v)}">${fmt(v)}</td></tr>`;
+
+  const bancosA   = isTfc ? d.bancosTfc : d.bancosTf;
+  const bavsaA    = isTfc ? (d.bavsaTfc || null) : getBavsaSaldoTf();
+  const emitidosA = isTfc ? d.emitidosTfc : d.emitidosTf;
+  const cpagarA   = isTfc ? d.cpagarTfc : d.cpagarTf;
+  const carteraA  = isTfc ? d.carteraTfc : d.carteraTf;
+  const cobrarA   = isTfc ? d.cobrarATfc : d.cobrarATf;
+  const incobrA   = isTfc ? d.incobrATfc : d.incobrATf;
+  const totalA    = isTfc ? d.totalATfc : d.totalATf;
+  const totalB    = isTfc ? d.totalBTfc : d.totalBTf;
+
+  const modoAHtml = `
+    ${row('Bancos', bancosA)}
+    ${row('BAVSA', bavsaA)}
+    ${row('Cheques emitidos', emitidosA ? -emitidosA : null)}
+    ${row('Cuentas a pagar', cpagarA ? -cpagarA : null)}
+    ${row('Cheques en cartera', carteraA || null)}
+    ${row('Cobrar', cobrarA)}
+    ${row('Incobrables' + (_incobrablesOn.a ? '' : ' (desactivado)'), incobrA)}
+    ${isTfc ? row('Posición Modo B', totalB) : ''}
+    <tr class="rs-total-row"><td class="rs-label rs-total">Posición Modo A</td><td class="rs-val rs-total ${cls(totalA)}">${fmt(totalA)}</td></tr>`;
+
+  const dispB    = isTfc ? d.mbTotalTfc : d.mbTotalTf;
+  const compB    = isTfc ? d.compromisosBTfc : d.compromisosBTf;
+  const cobrarB  = isTfc ? d.cobrarBTfc : d.cobrarBTf;
+  const incobrB  = isTfc ? d.incobrBTfc : d.incobrBTf;
+
+  const modoBHtml = `
+    ${row('Disponible (Modo B)', dispB || null)}
+    ${row('Cuentas a pagar', compB ? -compB : null)}
+    ${row('Cobrar', cobrarB)}
+    ${isTfc ? row('Movidas (a Financiera)', d.movidasTfc ? -d.movidasTfc : null) : ''}
+    ${row('Incobrables' + (_incobrablesOn.b ? '' : ' (desactivado)'), incobrB)}
+    <tr class="rs-total-row"><td class="rs-label rs-total">Posición Modo B</td><td class="rs-val rs-total ${cls(totalB)}">${fmt(totalB)}</td></tr>`;
+
+  return { modoAHtml, modoBHtml };
+}
+function buildPrintResumen(){
+  const el = document.getElementById('print-resumen');
+  if (!el) return;
+  const co = _coTab;
+  const coName = co === 'tfc' ? 'TF Carnes' : 'Trade Food';
+  const { modoAHtml, modoBHtml } = buildResumenPrintTable(co);
+  el.innerHTML = `
+    <div class="print-resumen-title">📊 Resumen de Posición · ${coName}</div>
+    <div class="print-resumen-tables">
+      <table class="print-resumen-table">
+        <thead><tr><th colspan="2">Modo A</th></tr></thead>
+        <tbody>${modoAHtml}</tbody>
+      </table>
+      <table class="print-resumen-table">
+        <thead><tr><th colspan="2">Modo B</th></tr></thead>
+        <tbody>${modoBHtml}</tbody>
+      </table>
+    </div>`;
+}
+// exportPDF() (app.js) es solo window.print() — acá se arma la primera
+// página (buildPrintResumen) y se filtra el detalle compartido (Cartera de
+// Cheques / Cuentas a Pagar) a la empresa activa antes de imprimir, y se
+// restaura el filtro que tenías al terminar (afterprint) para no pisarte
+// la selección en pantalla.
+const _origExportPDF = exportPDF;
+exportPDF = function(){
+  buildPrintResumen();
+  const dfEmpresaEl = document.getElementById('df-empresa');
+  const prevDfEmpresa = dfEmpresaEl ? dfEmpresaEl.value : '';
+  if (dfEmpresaEl && dfEmpresaEl.value !== _coTab) {
+    dfEmpresaEl.value = _coTab;
+    renderDetail();
+  }
+  const restore = () => {
+    window.removeEventListener('afterprint', restore);
+    if (dfEmpresaEl && dfEmpresaEl.value !== prevDfEmpresa) {
+      dfEmpresaEl.value = prevDfEmpresa;
+      renderDetail();
+    }
+  };
+  window.addEventListener('afterprint', restore);
+  _origExportPDF();
+};
 
 // renderAll() es la función que ya llama app.js después de cualquier cambio
 // (subida de archivo, exclusión, refresh, etc.) — enganchamos el resumen ahí

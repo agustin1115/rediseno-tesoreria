@@ -9,10 +9,15 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Teko:wght@500;600;700&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/style.css?v=13">
+<link rel="stylesheet" href="css/style.css?v=14">
 </head>
 <body>
 <div class="page">
+
+  <!-- Primera página del PDF (🖨 exportPDF): Resumen de Posición de la
+       empresa activa, Modo A y Modo B — generado por buildPrintResumen()
+       en app-patches.js. Oculto en pantalla, visible solo al imprimir. -->
+  <div id="print-resumen" class="print-only"></div>
 
   <!-- ═══ TOPBAR ═══ -->
   <div class="topbar">
@@ -390,6 +395,12 @@
       <p>"TF Carnes" y "Trade Food" son dos empresas separadas, cada una con sus propios
       Sheets y sus propios archivos subidos — nunca se mezclan datos de una con la otra,
       salvo en el Resumen de Posición, que las muestra a las dos lado a lado para comparar.</p>
+      <p>El botón <strong>"🖨 PDF"</strong> exporta solo la empresa en la que estás parado
+      (la que tenés seleccionada arriba, "TF Carnes" o "Trade Food") — no las dos juntas.
+      La primera página es el Resumen de Posición de esa empresa, con <strong>Modo A y
+      Modo B los dos</strong> (en pantalla ves uno a la vez; acá van los dos seguidos);
+      debajo sigue el resto de esa misma empresa (Cash Flow, Cartera de cheques,
+      Cuentas a pagar, etc.) tal como lo ves en pantalla.</p>
       <p>Casi todas las tarjetas de número (KPIs de arriba y de Financiera) tienen una
       flechita "↗" y son clickeables: al tocarlas se abre un detalle con los ítems
       (bancos, cheques, proveedores, clientes) que suman ese total.</p>
@@ -687,6 +698,6 @@
 </script>
 
 <script src="js/app.js?v=1"></script>
-<script src="js/app-patches.js?v=17"></script>
+<script src="js/app-patches.js?v=18"></script>
 </body>
 </html>
