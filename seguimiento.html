@@ -11,7 +11,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Teko:wght@500;600;700&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/style.css?v=10">
-<link rel="stylesheet" href="css/seguimiento.css?v=1">
+<link rel="stylesheet" href="css/seguimiento.css?v=2">
 </head>
 <body>
 <div class="page">
@@ -138,11 +138,16 @@
           <span class="card-title">Registro de cierres</span>
           <span class="card-title-note" id="registro-count"></span>
         </div>
+        <div class="registro-sel-bar" id="registro-sel-bar" hidden>
+          <span id="registro-sel-info"></span>
+          <button class="btn-registro-delete" onclick="SEG.borrarSeleccionados()">🗑 Borrar seleccionadas</button>
+        </div>
       </div>
       <div class="cf-table-wrap registro-table-wrap">
         <table class="registro-table">
           <thead>
             <tr>
+              <th class="chk-col"><input type="checkbox" id="registro-chk-all" onchange="SEG.toggleSelectAll(this.checked)" title="Seleccionar todas las semanas en pantalla"></th>
               <th>Semana</th><th>Fecha cierre</th><th>Empresa</th><th>Posición A</th><th>Posición B</th>
               <th>Disp. p/ operar</th><th>Mín. CF 30 D</th><th>Nota</th><th>Registrado</th>
             </tr>
@@ -155,6 +160,6 @@
   </div>
 
 </div>
-<script src="js/seguimiento.js?v=1"></script>
+<script src="js/seguimiento.js?v=2"></script>
 </body>
 </html>

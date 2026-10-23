@@ -246,10 +246,21 @@ Consolidado, con Δ vs cierre anterior y vs 4 cierres atrás), un chart de
 posición por semana, un chart de variación semana a semana, un chart de
 disponible vs. mínimo proyectado a 30 días (por empresa), una tabla de
 apertura por concepto (últimos 8 cierres + Δ) y el registro completo de
-cierres con la nota editable inline. Es de solo lectura salvo por la nota
-— todo lo demás sale de sumar/restar lo que ya guardó "🔒 Cerrar semana",
-sin escribir nada nuevo. Toggle Modo A/B y selector de período (8/13/26/52
-semanas o todas) controlan qué se ve, no qué se guarda.
+cierres con la nota editable inline. Todo sale de sumar/restar lo que ya
+guardó "🔒 Cerrar semana" — no se escribe nada nuevo acá, salvo la nota y,
+a pedido del usuario, borrar semanas cerradas por error o duplicadas.
+Toggle Modo A/B y selector de período (8/13/26/52 semanas o todas)
+controlan qué se ve, no qué se guarda.
+
+En "Registro de cierres", cada fila de checkbox corresponde a una
+**semana** (todas las filas — TF Carnes + Trade Food — que comparten la
+misma `fecha`, agrupadas con `rowspan`), no a una fila individual: una
+semana cerrada mete las dos empresas juntas (mismo timestamp), así que se
+seleccionan y se borran juntas, nunca una empresa suelta. Seleccionando
+una o varias (o "seleccionar todas" en el header) aparece un cartel con
+"N semanas seleccionadas" y un botón "🗑 Borrar seleccionadas", que pide
+confirmación (es irreversible) y borra de `cierres_semanales` con
+`sb.from('cierres_semanales').delete().in('fecha', [...fechas])`.
 
 ### Leerlo desde otra página
 

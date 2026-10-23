@@ -46,9 +46,10 @@
 
 /* ─── Registro de cierres ─── */
 .registro-table-wrap{max-height:560px}
-.registro-table th:nth-child(3),.registro-table td.co-cell,
-.registro-table th:nth-child(8),.registro-table td.nota-cell,
-.registro-table th:nth-child(9),.registro-table td.registrado{text-align:left}
+.registro-table th:nth-child(4),.registro-table td.co-cell,
+.registro-table th:nth-child(9),.registro-table td.nota-cell,
+.registro-table th:nth-child(10),.registro-table td.registrado{text-align:left}
+.registro-table th.chk-col,.registro-table td.chk-col{width:30px;text-align:center;vertical-align:middle}
 .co-dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px}
 .co-dot.tfc{background:var(--tfc-primary)}
 .co-dot.tf{background:var(--tf-primary)}
@@ -57,3 +58,9 @@
 .nota-cell:hover{background:var(--surface-2)}
 .nota-empty{color:var(--ink-faint);font-style:italic}
 .nota-edit-input{width:100%;padding:4px 6px;border-radius:5px;border:1px solid var(--tfc-primary);font:inherit;font-size:12px}
+.registro-table tr.cierre-sel td{background:#fdecea}
+
+/* ─── Selección + borrado de cierres ─── */
+.registro-sel-bar{display:flex;align-items:center;gap:10px;font-size:11.5px;color:var(--ink-soft)}
+.btn-registro-delete{padding:5px 12px;border:none;border-radius:6px;background:#e74c3c;color:#fff;font-size:11px;font-weight:600;cursor:pointer;font-family:inherit}
+.btn-registro-delete:hover{background:#cf4132}

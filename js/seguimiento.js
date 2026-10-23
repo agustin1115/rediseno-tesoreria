@@ -356,33 +356,98 @@ function renderTablaConcepto() {
   tbody.innerHTML = html || `<tr><td colspan="${t.columnas.length + 2}" class="no-data">Sin cierres para mostrar</td></tr>`;
 }
 
+// ── Selección de semanas (cierres) para borrar — una "semana" = todas las
+// filas (TF Carnes + Trade Food) que comparten la misma `fecha`, así que se
+// seleccionan y se borran juntas (ver agruparCierres más arriba: cada
+// cerrarSemana() las inserta de a pares con el mismo timestamp).
+let _selFechas = new Set();
+
 function renderRegistro() {
   const tbody = document.getElementById('registro-tbody');
   if (!tbody) return;
-  const cierres = cierresVisibles();
-  const rows = [];
-  for (const c of [...cierres].reverse()) {
-    for (const co of ['tfc', 'tf']) {
-      if (c[co]) rows.push({ cierre: c, co, r: c[co] });
-    }
-  }
+  const cierres = [...cierresVisibles()].reverse(); // más reciente primero
+  // Una semana puede dejar de estar "visible" (cambio de período) sin dejar
+  // de estar seleccionada — se limpia acá para que el cartel de abajo no
+  // cuente semanas que ya no se ven.
+  const fechasVisibles = new Set(cierres.map(c => c.fecha));
+  for (const f of [..._selFechas]) if (!fechasVisibles.has(f)) _selFechas.delete(f);
+
+  const totalFilas = cierres.reduce((n, c) => n + (c.tfc ? 1 : 0) + (c.tf ? 1 : 0), 0);
   const countEl = document.getElementById('registro-count');
-  if (countEl) countEl.textContent = `${rows.length} registrados`;
-  if (!rows.length) { tbody.innerHTML = `<tr><td colspan="9" class="no-data">Todavía no se cerró ninguna semana</td></tr>`; return; }
-  tbody.innerHTML = rows.map(({ cierre, co, r }) => {
-    const registrado = r.created_at ? new Date(r.created_at) : cierre.fechaObj;
-    return `<tr>
-      <td>${esc(isoWeekLabel(cierre.fechaObj))}</td>
-      <td>${cierre.fechaObj.toLocaleDateString('es-AR')}</td>
-      <td class="co-cell"><span class="co-dot ${co}"></span>${CO_LABEL[co]}</td>
-      <td>${fN(r.posicion_modo_a)}</td>
-      <td>${fN(r.posicion_modo_b)}</td>
-      <td>${fN(r.disponible_operar)}</td>
-      <td class="${r.minimo_30d != null && r.minimo_30d < 0 ? 'neg' : ''}">${fN(r.minimo_30d)}</td>
-      <td class="nota-cell" data-id="${r.id}" onclick="SEG.editarNota(this, ${r.id}, ${JSON.stringify(r.nota || '')})">${r.nota ? esc(r.nota) : '<span class="nota-empty">+ agregar nota</span>'}</td>
-      <td class="registrado">${registrado.toLocaleDateString('es-AR', { day: 'numeric', month: 'numeric' })}, ${registrado.toLocaleTimeString('es-AR', { hour: 'numeric', minute: '2-digit' })}</td>
-    </tr>`;
-  }).join('');
+  if (countEl) countEl.textContent = `${totalFilas} registrados`;
+  if (!totalFilas) { tbody.innerHTML = `<tr><td colspan="10" class="no-data">Todavía no se cerró ninguna semana</td></tr>`; }
+  else {
+    tbody.innerHTML = cierres.map(cierre => {
+      const cos = ['tfc', 'tf'].filter(co => cierre[co]);
+      const sel = _selFechas.has(cierre.fecha);
+      return cos.map((co, i) => {
+        const r = cierre[co];
+        const registrado = r.created_at ? new Date(r.created_at) : cierre.fechaObj;
+        const chk = i === 0
+          ? `<td class="chk-col" rowspan="${cos.length}"><input type="checkbox" ${sel ? 'checked' : ''} onchange="SEG.toggleSelCierre('${cierre.fecha}', this.checked)" title="Seleccionar esta semana"></td>`
+          : '';
+        return `<tr class="${sel ? 'cierre-sel' : ''}">
+          ${chk}
+          ${i === 0 ? `<td rowspan="${cos.length}">${esc(isoWeekLabel(cierre.fechaObj))}</td><td rowspan="${cos.length}">${cierre.fechaObj.toLocaleDateString('es-AR')}</td>` : ''}
+          <td class="co-cell"><span class="co-dot ${co}"></span>${CO_LABEL[co]}</td>
+          <td>${fN(r.posicion_modo_a)}</td>
+          <td>${fN(r.posicion_modo_b)}</td>
+          <td>${fN(r.disponible_operar)}</td>
+          <td class="${r.minimo_30d != null && r.minimo_30d < 0 ? 'neg' : ''}">${fN(r.minimo_30d)}</td>
+          <td class="nota-cell" data-id="${r.id}" onclick="SEG.editarNota(this, ${r.id}, ${JSON.stringify(r.nota || '')})">${r.nota ? esc(r.nota) : '<span class="nota-empty">+ agregar nota</span>'}</td>
+          <td class="registrado">${registrado.toLocaleDateString('es-AR', { day: 'numeric', month: 'numeric' })}, ${registrado.toLocaleTimeString('es-AR', { hour: 'numeric', minute: '2-digit' })}</td>
+        </tr>`;
+      }).join('');
+    }).join('');
+  }
+
+  const chkAll = document.getElementById('registro-chk-all');
+  if (chkAll) chkAll.checked = cierres.length > 0 && cierres.every(c => _selFechas.has(c.fecha));
+  renderSelBar(cierres.length);
+}
+
+function renderSelBar(totalCierresVisibles) {
+  const bar = document.getElementById('registro-sel-bar');
+  const info = document.getElementById('registro-sel-info');
+  if (!bar || !info) return;
+  const n = _selFechas.size;
+  bar.hidden = n === 0;
+  info.textContent = `${n} semana${n === 1 ? '' : 's'} seleccionada${n === 1 ? '' : 's'}`;
+}
+
+function toggleSelCierre(fecha, checked) {
+  if (checked) _selFechas.add(fecha); else _selFechas.delete(fecha);
+  renderRegistro();
+}
+
+function toggleSelectAll(checked) {
+  const cierres = cierresVisibles();
+  if (checked) cierres.forEach(c => _selFechas.add(c.fecha));
+  else cierres.forEach(c => _selFechas.delete(c.fecha));
+  renderRegistro();
+}
+
+// ── Borra la(s) semana(s) seleccionadas: todas las filas de
+// cierres_semanales que comparten esa `fecha` (TF Carnes + Trade Food
+// juntas), para una semana cerrada por error o duplicada. Pide
+// confirmación porque es irreversible.
+async function borrarSeleccionados() {
+  const fechas = [..._selFechas];
+  if (!fechas.length) return;
+  const n = fechas.length;
+  const ok = confirm(`¿Borrar ${n} semana${n === 1 ? '' : 's'} cerrada${n === 1 ? '' : 's'}? Esto borra TF Carnes y Trade Food de esa${n === 1 ? '' : 's'} semana${n === 1 ? '' : 's'} y no se puede deshacer.`);
+  if (!ok) return;
+  const btn = document.querySelector('.btn-registro-delete');
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ Borrando…'; }
+  const { error } = await sb.from('cierres_semanales').delete().in('fecha', fechas);
+  if (error) {
+    console.error('[Seguimiento] error borrando cierres', error);
+    alert('No se pudo borrar: ' + error.message);
+    if (btn) { btn.disabled = false; btn.textContent = '🗑 Borrar seleccionadas'; }
+    return;
+  }
+  _selFechas.clear();
+  await cargarDatos();
 }
 
 function editarNota(td, id, actual) {
@@ -436,7 +501,7 @@ function exportExcelSeguimiento() {
   XLSX.writeFile(wb, `seguimiento-cierres-${new Date().toISOString().slice(0, 10)}.xlsx`);
 }
 
-window.SEG = { setModo, setPeriodo, setCoConcepto, setCoCashflow, editarNota, exportExcelSeguimiento, cargarDatos };
+window.SEG = { setModo, setPeriodo, setCoConcepto, setCoCashflow, editarNota, exportExcelSeguimiento, cargarDatos, toggleSelCierre, toggleSelectAll, borrarSeleccionados };
 document.addEventListener('DOMContentLoaded', cargarDatos);
 
 } // typeof window !== 'undefined'
