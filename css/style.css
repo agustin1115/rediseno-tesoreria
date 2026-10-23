@@ -556,7 +556,9 @@ tr.rs-row-off td{text-decoration:line-through}
   #resumen-wrap{display:none!important}
   .print-only{display:block}
   #print-resumen{page-break-after:always;padding:8px 2px 0}
-  .print-resumen-title{font-family:'Teko',sans-serif;font-size:22px;font-weight:600;margin:0 0 10px}
+  .print-resumen-header{display:flex;align-items:center;gap:16px;margin:0 0 14px;padding-bottom:10px;border-bottom:2px solid #333}
+  .print-resumen-logo{height:50px;width:auto;max-width:220px;object-fit:contain;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .print-resumen-title{font-family:'Teko',sans-serif;font-size:22px;font-weight:600;color:#333}
   .print-resumen-tables{display:flex;gap:18px}
   .print-resumen-table{flex:1;border-collapse:collapse;width:100%}
   .print-resumen-table caption,.print-resumen-table thead th{text-align:left;font-size:12px;font-weight:700;padding:4px 6px;border-bottom:2px solid #333}

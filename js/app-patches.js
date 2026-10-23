@@ -915,9 +915,13 @@ function buildPrintResumen(){
   if (!el) return;
   const co = _coTab;
   const coName = co === 'tfc' ? 'TF Carnes' : 'Trade Food';
+  const logoSrc = co === 'tfc' ? 'img/logo-tfc.png' : 'img/logo-tf.png';
   const { modoAHtml, modoBHtml } = buildResumenPrintTable(co);
   el.innerHTML = `
-    <div class="print-resumen-title">📊 Resumen de Posición · ${coName}</div>
+    <div class="print-resumen-header">
+      <img src="${logoSrc}" alt="${coName}" class="print-resumen-logo">
+      <div class="print-resumen-title">Resumen de Posición</div>
+    </div>
     <div class="print-resumen-tables">
       <table class="print-resumen-table">
         <thead><tr><th colspan="2">Modo A</th></tr></thead>
