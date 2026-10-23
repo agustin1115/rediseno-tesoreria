@@ -933,13 +933,29 @@ function buildPrintResumen(){
       </table>
     </div>`;
 }
+// Espera a que una <img> termine de cargar (o falle) antes de seguir — el
+// logo del PDF se recién metió en el DOM con innerHTML, así que todavía no
+// terminó de bajar la imagen; si no se espera esto, window.print() dispara
+// con la imagen a mitad de camino y el logo sale en blanco (justo lo que
+// pasaba: a veces aparecía uno, a veces ninguno, según qué tan rápido
+// respondiera la red en cada intento).
+function waitForImg(img, timeoutMs){
+  if (!img) return Promise.resolve();
+  if (img.complete) return Promise.resolve();
+  return new Promise(resolve => {
+    const done = () => { clearTimeout(t); img.removeEventListener('load', done); img.removeEventListener('error', done); resolve(); };
+    const t = setTimeout(done, timeoutMs || 3000);
+    img.addEventListener('load', done);
+    img.addEventListener('error', done);
+  });
+}
 // exportPDF() (app.js) es solo window.print() — acá se arma la primera
 // página (buildPrintResumen) y se filtra el detalle compartido (Cartera de
 // Cheques / Cuentas a Pagar) a la empresa activa antes de imprimir, y se
 // restaura el filtro que tenías al terminar (afterprint) para no pisarte
 // la selección en pantalla.
 const _origExportPDF = exportPDF;
-exportPDF = function(){
+exportPDF = async function(){
   buildPrintResumen();
   const dfEmpresaEl = document.getElementById('df-empresa');
   const prevDfEmpresa = dfEmpresaEl ? dfEmpresaEl.value : '';
@@ -955,6 +971,7 @@ exportPDF = function(){
     }
   };
   window.addEventListener('afterprint', restore);
+  await waitForImg(document.querySelector('#print-resumen .print-resumen-logo'));
   _origExportPDF();
 };
 
