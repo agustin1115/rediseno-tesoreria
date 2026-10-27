@@ -224,6 +224,10 @@ tr:not(.weekend):not(.feriado):hover td{background:var(--surface-2)}
 .mb-table tr.overdue-row td{background:#FCEDEC}
 .mb-table tr.soon-row td{background:#FCF6E8}
 .mb-empty{padding:22px;text-align:center;color:var(--ink-faint);font-size:11.5px;background:var(--surface)}
+.productos-table td{vertical-align:middle}
+.prod-input{width:100px;font-size:12px;padding:6px 9px;border:1px solid var(--border);border-radius:6px;font-family:inherit;background:var(--surface);color:var(--ink);text-align:right}
+.prod-input:focus{outline:none;border-color:var(--tfc-primary)}
+.prod-total{font-weight:700;color:var(--tfc-primary)}
 
 /* ═══ CARGAR ARCHIVOS (nuevo, reemplaza la tira larga de uploads) ═══ */
 .upload-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}

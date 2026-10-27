@@ -178,6 +178,118 @@ Object.entries({ tenencia: 'bavsa-tf-tenencia', garantia: 'bavsa-tf-garantia', c
 renderBavsaTfKpi();
 renderBavsaCupoDispTf();
 
+// ── Productos (TF Carnes): Media y Cajas, carga manual de Kilos y Precio
+// por kilo — IVA (10,5%) y Total se calculan solos. Sincroniza en la nube
+// (tabla "productos_tfc" de Supabase, 1 sola fila), mismo criterio que
+// BAVSA (Trade Food): localStorage es el caché local, la nube manda al
+// cargar la página.
+const _productosTfc = { media: { kilos: null, precio: null }, cajas: { kilos: null, precio: null } };
+(function loadProductosTfc(){
+  try {
+    const raw = localStorage.getItem('cf_productos_tfc_v1');
+    if (raw) Object.assign(_productosTfc, JSON.parse(raw));
+  } catch(e){}
+})();
+function saveProductosTfc(){ try{ localStorage.setItem('cf_productos_tfc_v1', JSON.stringify(_productosTfc)); }catch(e){} }
+
+async function syncProductosTfcToSupabase(){
+  try {
+    const { error } = await sb.from('productos_tfc').upsert({
+      id: 1,
+      media_kilos: _productosTfc.media.kilos,
+      media_precio: _productosTfc.media.precio,
+      cajas_kilos: _productosTfc.cajas.kilos,
+      cajas_precio: _productosTfc.cajas.precio,
+      updated_at: new Date().toISOString(),
+    });
+    if (error) throw error;
+  } catch(e) {
+    console.warn('[Supabase] No se pudo guardar Productos TF Carnes en la nube (queda guardado solo en este navegador):', e.message);
+  }
+}
+(async function hydrateProductosTfcFromSupabase(){
+  try {
+    const { data, error } = await sb.from('productos_tfc').select('*').eq('id', 1).maybeSingle();
+    if (error) throw error;
+    if (data) {
+      _productosTfc.media.kilos = data.media_kilos;
+      _productosTfc.media.precio = data.media_precio;
+      _productosTfc.cajas.kilos = data.cajas_kilos;
+      _productosTfc.cajas.precio = data.cajas_precio;
+      saveProductosTfc();
+      refreshProductosTfcUi();
+    } else {
+      syncProductosTfcToSupabase();
+    }
+  } catch(e) {
+    console.warn('[Supabase] No se pudo sincronizar Productos TF Carnes, se usa el caché local:', e.message);
+  }
+})();
+
+// Subtotal = Kilos × Precio. IVA = 10,5% del subtotal. Total = Subtotal + IVA.
+// null si no se cargó ni Kilos ni Precio todavía (para mostrar "—").
+function getProductoSubtotal(tipo){
+  const p = _productosTfc[tipo];
+  if (!p || (p.kilos == null && p.precio == null)) return null;
+  return (p.kilos||0) * (p.precio||0);
+}
+function getProductoIva(tipo){
+  const sub = getProductoSubtotal(tipo);
+  return sub == null ? null : sub * 0.105;
+}
+function getProductoTotal(tipo){
+  const sub = getProductoSubtotal(tipo);
+  return sub == null ? null : sub + sub * 0.105;
+}
+function renderProductosTfc(){
+  ['media','cajas'].forEach(tipo => {
+    const ivaEl = document.getElementById(`prod-tfc-${tipo}-iva`);
+    const totalEl = document.getElementById(`prod-tfc-${tipo}-total`);
+    const iva = getProductoIva(tipo);
+    const total = getProductoTotal(tipo);
+    if (ivaEl) ivaEl.textContent = iva != null ? fN(iva) : '—';
+    if (totalEl) totalEl.textContent = total != null ? fN(total) : '—';
+  });
+}
+function setProductoTfc(tipo, campo, value){
+  const n = parseFloat(value);
+  _productosTfc[tipo][campo] = Number.isFinite(n) ? n : null;
+  saveProductosTfc();
+  syncProductosTfcToSupabase();
+  renderProductosTfc();
+  // Seguro acá (disparado por el usuario, mucho después de que terminó de
+  // cargar el script) — ver el mismo comentario en setBavsaTf().
+  renderResumen();
+}
+// Precarga los inputs con lo guardado localmente — se vuelve a correr desde
+// refreshProductosTfcUi() cuando llegue la respuesta de Supabase, si trae algo.
+function refreshProductosTfcUi(){
+  ['media','cajas'].forEach(tipo => {
+    const kEl = document.getElementById(`prod-tfc-${tipo}-kilos`);
+    const pEl = document.getElementById(`prod-tfc-${tipo}-precio`);
+    if (kEl) kEl.value = (_productosTfc[tipo].kilos != null) ? _productosTfc[tipo].kilos : '';
+    if (pEl) pEl.value = (_productosTfc[tipo].precio != null) ? _productosTfc[tipo].precio : '';
+  });
+  renderProductosTfc();
+  renderResumen();
+}
+Object.entries({ media: ['prod-tfc-media-kilos','prod-tfc-media-precio'], cajas: ['prod-tfc-cajas-kilos','prod-tfc-cajas-precio'] }).forEach(([tipo, [kId, pId]]) => {
+  const kEl = document.getElementById(kId), pEl = document.getElementById(pId);
+  if (kEl && _productosTfc[tipo].kilos != null) kEl.value = _productosTfc[tipo].kilos;
+  if (pEl && _productosTfc[tipo].precio != null) pEl.value = _productosTfc[tipo].precio;
+});
+renderProductosTfc();
+
+// Activar/desactivar Stock Medias / Stock Cajas del total de Posición Modo A
+// (TF Carnes) — a pedido tuyo, se toca el nombre de la fila, mismo criterio
+// que Incobrables. Tampoco se guarda en localStorage a propósito, mismo
+// motivo que _incobrablesOn: arranca activado en cada carga.
+let _stockOn = { media: true, cajas: true };
+function toggleStock(tipo){
+  _stockOn[tipo] = !_stockOn[tipo];
+  renderResumen();
+}
+
 // ── Cheques cargados a mano en "Cartera de Cheques" ─────────────────
 // A veces hay un cheque real en cartera que no viene ni del Excel del banco
 // ni del Sheet de físicos (llegó por otro medio, se traspapeló el archivo,
@@ -725,6 +837,14 @@ function computeResumen(){
   const incobrablesFactorA = _incobrablesOn.a ? 1 : 0;
   const incobrablesFactorB = _incobrablesOn.b ? 1 : 0;
 
+  // Stock Medias / Stock Cajas (TF Carnes): el "Total" de cada fila de la
+  // tarjeta "Productos" (Kilos × Precio + IVA). Se puede activar/desactivar
+  // del total de Posición Modo A tocando el nombre, igual que Incobrables.
+  const stockMediasTfc = getProductoTotal('media');
+  const stockCajasTfc  = getProductoTotal('cajas');
+  const stockMediasFactor = _stockOn.media ? 1 : 0;
+  const stockCajasFactor  = _stockOn.cajas ? 1 : 0;
+
   // Totales de LOS DOS modos, siempre (no solo el que está en pantalla) —
   // así "Cerrar semana" puede guardar todo sin importar qué pestaña tenías
   // abierta. Mismas fórmulas que abajo, un solo lugar donde calcularlas.
@@ -732,14 +852,16 @@ function computeResumen(){
   // (ver abajo) — Modo B no depende de Modo A, así que no hay circularidad.
   const totalBTfc = (mbTotalTfc||0) - compromisosBTfc + (cobrarBTfc||0) - movidasTfc + (incobrBTfc||0) * incobrablesFactorB;
   const totalBTf  = (mbTotalTf ||0) - compromisosBTf  + (cobrarBTf ||0) + (incobrBTf ||0) * incobrablesFactorB;
-  const totalATfc = (bancosTfc||0) + bavsaTfc - emitidosTfc - cpagarTfc + carteraTfc + (cobrarATfc||0) + (incobrATfc||0) * incobrablesFactorA + totalBTfc;
+  const totalATfc = (bancosTfc||0) + bavsaTfc - emitidosTfc - cpagarTfc + carteraTfc + (cobrarATfc||0) + (incobrATfc||0) * incobrablesFactorA
+    + (stockMediasTfc||0) * stockMediasFactor + (stockCajasTfc||0) * stockCajasFactor + totalBTfc;
   const totalATf  = (bancosTf ||0) - emitidosTf  - cpagarTf  + carteraTf  + (cobrarATf ||0) + (incobrATf ||0) * incobrablesFactorA + (getBavsaSaldoTf()||0);
 
   return {
     bancosTfc, bancosTf, bavsaTfc, carteraTfc, carteraTf, emitidosTfc, emitidosTf,
     cpagarTfc, cpagarTf, compromisosBTfc, compromisosBTf, mbTotalTfc, mbTotalTf,
     cobrarATfc, cobrarATf, cobrarBTfc, cobrarBTf, incobrATfc, incobrBTfc, incobrATf, incobrBTf,
-    movidasTfc, incobrablesFactorA, incobrablesFactorB, totalBTfc, totalBTf, totalATfc, totalATf,
+    movidasTfc, incobrablesFactorA, incobrablesFactorB, stockMediasTfc, stockCajasTfc,
+    totalBTfc, totalBTf, totalATfc, totalATf,
   };
 }
 
@@ -760,7 +882,8 @@ function renderResumen(){
     bancosTfc, bancosTf, bavsaTfc, carteraTfc, carteraTf, emitidosTfc, emitidosTf,
     cpagarTfc, cpagarTf, compromisosBTfc, compromisosBTf, mbTotalTfc, mbTotalTf,
     cobrarATfc, cobrarATf, cobrarBTfc, cobrarBTf, incobrATfc, incobrBTfc, incobrATf, incobrBTf,
-    movidasTfc, incobrablesFactorA, incobrablesFactorB, totalBTfc, totalBTf, totalATfc, totalATf,
+    movidasTfc, incobrablesFactorA, incobrablesFactorB, stockMediasTfc, stockCajasTfc,
+    totalBTfc, totalBTf, totalATfc, totalATf,
   } = computeResumen();
 
   // Foto de estos números para "Cerrar semana" (ver cerrarSemana() más abajo)
@@ -788,6 +911,17 @@ function renderResumen(){
       <td class="rs-val tf-col ${cls(vTf)}">${fmt(vTf)}</td>
     </tr>`;
   };
+  // Fila "Stock Medias" / "Stock Cajas" (TF Carnes) — mismo criterio que
+  // Incobrables: tocar el nombre activa/desactiva su efecto en el total.
+  // Trade Food no tiene stock de TF Carnes → siempre "—", sin toggle ahí.
+  const stockRow = (tipo, label, vTfc) => {
+    const on = _stockOn[tipo];
+    return `<tr class="${on ? '' : 'rs-row-off'}">
+      <td class="rs-label rs-label-toggle" onclick="toggleStock('${tipo}')" title="Tocar para ${on ? 'desactivar' : 'activar'} ${label} en el total">${label}</td>
+      <td class="rs-val tfc-col ${cls(vTfc)}">${fmt(vTfc)}</td>
+      <td class="rs-val tf-col">—</td>
+    </tr>`;
+  };
 
   let bodyHtml, footHtml;
 
@@ -801,6 +935,8 @@ function renderResumen(){
       ${row('Cheques emitidos', emitidosTfc ? -emitidosTfc : null, emitidosTf ? -emitidosTf : null)}
       ${row('Cuentas a pagar', cpagarTfc ? -cpagarTfc : null, cpagarTf ? -cpagarTf : null)}
       ${row('Cheques en cartera', carteraTfc || null, carteraTf || null)}
+      ${stockRow('media', 'Stock Medias', stockMediasTfc)}
+      ${stockRow('cajas', 'Stock Cajas', stockCajasTfc)}
       ${row('Cobrar', cobrarATfc, cobrarATf)}
       ${incobrablesRow('a', incobrATfc, incobrATf)}
       <tr class="rs-ref-row">
@@ -813,7 +949,9 @@ function renderResumen(){
         <td class="rs-val rs-total tfc-col ${cls(totalATfc)}">${fmt(totalATfc)}</td>
         <td class="rs-val rs-total tf-col ${cls(totalATf)}">${fmt(totalATf)}</td>
       </tr>`;
-    footHtml = `Modo A (TF Carnes) = Bancos + BAVSA − Cheques emitidos − Cuentas a pagar + Cheques en cartera + Cobrar + Incobrables + Posición Modo B.
+    footHtml = `Modo A (TF Carnes) = Bancos + BAVSA − Cheques emitidos − Cuentas a pagar + Cheques en cartera + Stock Medias + Stock Cajas + Cobrar +
+      Incobrables + Posición Modo B. "Stock Medias"/"Stock Cajas" son el Total de la tarjeta "Productos" (Kilos × Precio + IVA 10,5%) — solo
+      TF Carnes, Trade Food no tiene esa tarjeta. Tocá el nombre de cada uno para activarlo/desactivarlo del total, igual que Incobrables.
       Modo A (Trade Food) = Bancos + BAVSA − Cheques emitidos − Cuentas a pagar + Cheques en cartera + Cobrar + Incobrables ("Posición Modo B"
       es solo TF Carnes, acá no suma nada). La fila "BAVSA" en Trade Food es Tenencia − Caución (de los 4 montos manuales de la sección BAVSA
       de Modo B: Tenencia, Garantía, Caución, Disponible Caución — Garantía y Disponible Caución no entran acá, arman el "Cupo disponible
@@ -890,6 +1028,8 @@ function buildResumenPrintTable(co){
     ${row('Cheques emitidos', emitidosA ? -emitidosA : null)}
     ${row('Cuentas a pagar', cpagarA ? -cpagarA : null)}
     ${row('Cheques en cartera', carteraA || null)}
+    ${isTfc ? row('Stock Medias' + (_stockOn.media ? '' : ' (desactivado)'), d.stockMediasTfc) : ''}
+    ${isTfc ? row('Stock Cajas' + (_stockOn.cajas ? '' : ' (desactivado)'), d.stockCajasTfc) : ''}
     ${row('Cobrar', cobrarA)}
     ${row('Incobrables' + (_incobrablesOn.a ? '' : ' (desactivado)'), incobrA)}
     ${isTfc ? row('Posición Modo B', totalB) : ''}

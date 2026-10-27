@@ -9,7 +9,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Teko:wght@500;600;700&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/style.css?v=15">
+<link rel="stylesheet" href="css/style.css?v=16">
 </head>
 <body>
 <div class="page">
@@ -203,6 +203,38 @@
             <th>Proveedor / Destino</th><th>Fecha pago</th><th class="r">Días</th><th class="r">Importe</th>
           </tr></thead>
           <tbody id="mb-tbody-tfc"><tr><td colspan="4" class="mb-empty">Sin datos</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Productos (TF Carnes): Media y Cajas, carga manual de Kilos/Precio —
+         IVA y Total se calculan solos. Sincroniza en la nube (Supabase,
+         tabla "productos_tfc"), igual que BAVSA (Trade Food). -->
+    <div class="mb-section section-card" id="productos-section-tfc">
+      <div class="mb-header">
+        <span class="mb-title">📦 Productos</span>
+      </div>
+      <div class="mb-table-wrap" style="max-height:none">
+        <table class="mb-table productos-table">
+          <thead><tr>
+            <th>Producto</th><th class="r">Kilos</th><th class="r">Precio</th><th class="r">IVA (10,5%)</th><th class="r">Total</th>
+          </tr></thead>
+          <tbody>
+            <tr>
+              <td>Media</td>
+              <td class="r"><input type="number" class="prod-input" id="prod-tfc-media-kilos" placeholder="0" oninput="setProductoTfc('media','kilos',this.value)"></td>
+              <td class="r"><input type="number" class="prod-input" id="prod-tfc-media-precio" placeholder="0" oninput="setProductoTfc('media','precio',this.value)"></td>
+              <td class="r" id="prod-tfc-media-iva">—</td>
+              <td class="r prod-total" id="prod-tfc-media-total">—</td>
+            </tr>
+            <tr>
+              <td>Cajas</td>
+              <td class="r"><input type="number" class="prod-input" id="prod-tfc-cajas-kilos" placeholder="0" oninput="setProductoTfc('cajas','kilos',this.value)"></td>
+              <td class="r"><input type="number" class="prod-input" id="prod-tfc-cajas-precio" placeholder="0" oninput="setProductoTfc('cajas','precio',this.value)"></td>
+              <td class="r" id="prod-tfc-cajas-iva">—</td>
+              <td class="r prod-total" id="prod-tfc-cajas-total">—</td>
+            </tr>
+          </tbody>
         </table>
       </div>
     </div>
@@ -479,12 +511,13 @@
           <tr><td>Total equiv. pesos</td><td>Pesos + Cheques + (Dólares × la cotización que vos cargás arriba, si la cargaste) + Saldo Financiera (solo TF Carnes) — a pedido tuyo.</td></tr>
           <tr><td>Total compromisos (Vencido / 7 / 15 / Más15)</td><td><strong>Excel manual</strong> que subís en esta misma pestaña ("Subir compromisos" de Modo B) — reutiliza el mismo lector que Cuentas a pagar, pero es un archivo distinto.</td></tr>
           <tr><td>BAVSA — Tenencia / Garantía / Caución / Disponible Caución <em>(solo Trade Food)</em></td><td><strong>Carga manual</strong> — no vienen de ningún Sheet ni Excel, no hay forma de leerlos automáticamente. A pedido tuyo, <strong>sincronizan en la nube</strong> (Supabase, tabla "bavsa_tf") — cualquiera que abra el link ve los mismos 4 valores, no hace falta cargarlos de nuevo en cada navegador (localStorage sigue existiendo como caché local, para que no se vea vacío mientras llega la respuesta de la nube). <strong>Tenencia − Caución</strong> es la tarjeta "Saldo BAVSA ↗" de Cash Flow Proyectado (①) y la fila "BAVSA" de Trade Food en Resumen de Posición (⑤) — y, a pedido tuyo, también suma a la Posición Modo A de Trade Food (ver ⑤). Garantía y Disponible Caución no entran en ese número: arman el "Cupo disponible caución" calculado de la misma sección (70% × (Tenencia − Garantía) − Caución), que es solo para consulta y no suma a ningún total.</td></tr>
+          <tr><td>Productos — Media / Cajas <em>(solo TF Carnes)</em></td><td><strong>Carga manual</strong> de Kilos y Precio para cada producto — IVA (10,5% del subtotal Kilos × Precio) y Total (subtotal + IVA) se calculan solos, no se cargan. Sincroniza en la nube (Supabase, tabla "productos_tfc"), mismo criterio que BAVSA. El Total de cada fila es "Stock Medias"/"Stock Cajas" en Resumen de Posición (⑤) — solo TF Carnes, Trade Food no tiene esta tarjeta.</td></tr>
         </tbody>
       </table>
 
       <h2>⑤ Resumen de Posición — Modo A</h2>
-      <div class="leeme-flow">Bancos <span class="arrow">+</span> BAVSA <span class="arrow">−</span> Cheques emitidos <span class="arrow">−</span> Cuentas a pagar <span class="arrow">+</span> Cheques en cartera <span class="arrow">+</span> Cobrar <span class="arrow">+</span> Incobrables <span class="arrow">+</span> Posición Modo B (solo TFC) <span class="arrow">=</span> <b>Posición Modo A</b></div>
-      <p>La parte de Bancos/Cheques emitidos/Cuentas a pagar/Cheques en cartera está <strong>confirmada</strong> contra el ejemplo de referencia que me pasaste. "BAVSA" se sumó después, a pedido tuyo — en TF Carnes es el banco BAVSA (Sheet "Reporte Tesorería"); en Trade Food es <strong>Tenencia − Caución</strong>, de los 4 montos manuales de la sección BAVSA de Modo B (④) — dos fuentes distintas, pero las dos suman a la Posición Modo A de su empresa. <strong>Cobrar</strong> usa solo Archivo A (antes sumaba Archivo A + Archivo B; se ajustó a pedido tuyo). <strong>Incobrables se suma</strong> al total (no se resta), y se puede <strong>activar/desactivar tocando el nombre de la fila</strong> — cuando está desactivado, el número sigue mostrándose (tachado) pero no entra en el total. "Movidas (a Financiera)" ya no está en Modo A — se movió a Modo B. <strong>Posición Modo B</strong> es el total completo de Modo B (sección ⑥) sumado tal cual da — si Modo B diera negativo, resta — y es <strong>solo TF Carnes</strong>: en Trade Food esa fila queda en "—" y no afecta su total de Modo A. El botón "↺ Actualizar" de esta tarjeta vuelve a leer todos los Sheets/Excels (Tesorería, Modo B, TFcobranzas) antes de recalcular — no es solo un refresco visual con lo que ya estaba cargado.</p>
+      <div class="leeme-flow">Bancos <span class="arrow">+</span> BAVSA <span class="arrow">−</span> Cheques emitidos <span class="arrow">−</span> Cuentas a pagar <span class="arrow">+</span> Cheques en cartera <span class="arrow">+</span> Stock Medias (solo TFC) <span class="arrow">+</span> Stock Cajas (solo TFC) <span class="arrow">+</span> Cobrar <span class="arrow">+</span> Incobrables <span class="arrow">+</span> Posición Modo B (solo TFC) <span class="arrow">=</span> <b>Posición Modo A</b></div>
+      <p>La parte de Bancos/Cheques emitidos/Cuentas a pagar/Cheques en cartera está <strong>confirmada</strong> contra el ejemplo de referencia que me pasaste. "BAVSA" se sumó después, a pedido tuyo — en TF Carnes es el banco BAVSA (Sheet "Reporte Tesorería"); en Trade Food es <strong>Tenencia − Caución</strong>, de los 4 montos manuales de la sección BAVSA de Modo B (④) — dos fuentes distintas, pero las dos suman a la Posición Modo A de su empresa. <strong>Stock Medias</strong> y <strong>Stock Cajas</strong> (solo TF Carnes) son el Total de cada fila de la tarjeta "Productos" (④) — Kilos × Precio + IVA (10,5%) — y, como Incobrables, se pueden <strong>activar/desactivar tocando el nombre de la fila</strong>. <strong>Cobrar</strong> usa solo Archivo A (antes sumaba Archivo A + Archivo B; se ajustó a pedido tuyo). <strong>Incobrables se suma</strong> al total (no se resta), y se puede <strong>activar/desactivar tocando el nombre de la fila</strong> — cuando está desactivado, el número sigue mostrándose (tachado) pero no entra en el total. "Movidas (a Financiera)" ya no está en Modo A — se movió a Modo B. <strong>Posición Modo B</strong> es el total completo de Modo B (sección ⑥) sumado tal cual da — si Modo B diera negativo, resta — y es <strong>solo TF Carnes</strong>: en Trade Food esa fila queda en "—" y no afecta su total de Modo A. El botón "↺ Actualizar" de esta tarjeta vuelve a leer todos los Sheets/Excels (Tesorería, Modo B, TFcobranzas) antes de recalcular — no es solo un refresco visual con lo que ya estaba cargado.</p>
       <table class="leeme-table">
         <thead><tr><th>Fila</th><th>De dónde sale</th></tr></thead>
         <tbody>
@@ -493,6 +526,7 @@
           <tr><td>Cheques emitidos</td><td>Mismo número que "Chq emitidos (total)" (①).</td></tr>
           <tr><td>Cuentas a pagar</td><td>Mismo número que "Cuentas a pagar" (①).</td></tr>
           <tr><td>Cheques en cartera</td><td>Mismo número que "Cartera cheques" (①).</td></tr>
+          <tr><td>Stock Medias / Stock Cajas <em>(solo TF Carnes)</em></td><td>Total de la fila "Media"/"Cajas" de la tarjeta "Productos" (④): Kilos × Precio + IVA (10,5%). Trade Food no tiene esta tarjeta → "—". Clickeable: tocar el nombre lo activa/desactiva del total, igual que Incobrables.</td></tr>
           <tr><td>Cobrar</td><td>De TFcobranzas, <strong>solo Archivo A</strong> — ver ⑦ más abajo.</td></tr>
           <tr><td>Incobrables</td><td>De TFcobranzas, <strong>solo Archivo A</strong> — ver ⑦ más abajo. Clickeable: tocar el nombre lo activa/desactiva del total.</td></tr>
           <tr><td>Posición Modo B</td><td>Solo TF Carnes (Trade Food queda en "—", no afecta su Modo A). El total completo de Modo B (sección ⑥), calculado con los mismos ajustes de Incobrables de Modo B (si está desactivado ahí, también se refleja acá).</td></tr>
@@ -549,6 +583,7 @@
           <tr><td>Excel "Compromisos" (Modo B)</td><td>Buckets de Total compromisos en Modo B</td></tr>
           <tr><td>Cotización USD (la tipeás vos)</td><td>Conversión de Dólares en caja</td></tr>
           <tr><td>BAVSA Trade Food (la cargás vos, sincroniza en la nube)</td><td>Tenencia/Garantía/Caución/Disponible Caución</td></tr>
+          <tr><td>Productos TF Carnes (la cargás vos, sincroniza en la nube)</td><td>Stock Medias, Stock Cajas</td></tr>
           <tr><td>Cálculo (no tiene fuente propia)</td><td>Disponible para operar, Fondos disponibles, Saldo fin/Disponible del Cash Flow, ambas Posición (Modo A y B)</td></tr>
         </tbody>
       </table>
@@ -698,6 +733,6 @@
 </script>
 
 <script src="js/app.js?v=1"></script>
-<script src="js/app-patches.js?v=20"></script>
+<script src="js/app-patches.js?v=21"></script>
 </body>
 </html>
