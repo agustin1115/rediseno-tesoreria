@@ -558,6 +558,21 @@ tr.rs-row-off td{text-decoration:line-through}
   .cf-table-wrap{max-height:none!important;overflow:visible!important}
   .detail-section{margin-top:12px;border:none}
   .detail-wrap{max-height:none!important;overflow:visible!important}
+  /* Estos 2 también tienen max-height+overflow:auto a propósito en pantalla
+     (listas largas con scroll propio) — en el PDF, igual que arriba, se
+     sueltan del todo: si no, además de cortar filas contra el borde de su
+     propia caja, esa caja puede imprimir su scrollbar (la misma franja
+     gris de antes, pero adentro de la hoja en vez del borde de la página). */
+  .fin-table-wrap{max-height:none!important;overflow:visible!important}
+  .mb-table-wrap{max-height:none!important;overflow:visible!important}
+  /* Las franjas de tarjetas KPI (varios números en una sola fila) no se
+     cortan a mitad de camino en un salto de página — si no, las etiquetas
+     quedan al pie de una hoja y los valores aparecen solos, recortados,
+     al tope de la siguiente. */
+  .kpi-row,.fin-kpi-row,.mb-kpi-row{page-break-inside:avoid;break-inside:avoid}
+  /* Mismo criterio para cada fila de cualquier tabla — que no se parta una
+     fila de cheques/proveedores/compromisos a mitad de camino. */
+  tr{page-break-inside:avoid;break-inside:avoid}
   thead tr{-webkit-print-color-adjust:exact;print-color-adjust:exact}
   /* La tarjeta de Resumen de Posición normal (2 empresas lado a lado, un
      solo modo a la vez) se reemplaza en el PDF por #print-resumen (1 sola
