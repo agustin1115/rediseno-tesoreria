@@ -543,6 +543,11 @@ tr.rs-row-off td{text-decoration:line-through}
 @media print {
   .topbar,.subbar,.tabbar,.ov-overlay,.detail-filters,.d-chk,
   .detail-tabs button,.btn-dsel-clear,.detail-sel-bar{display:none!important}
+  /* La franja gris vertical del costado del PDF es la propia scrollbar de
+     la página (si tenés "Mostrar barras de desplazamiento: Siempre" en
+     Preferencias del Sistema, Safari la captura en el PDF) — con esto no
+     hay scroll que mostrar, así que no hay scrollbar que se cuele. */
+  html,body{overflow:hidden!important}
   body{background:#fff!important;font-size:11px}
   .page{padding:0;max-width:100%}
   /* Solo la empresa activa (switchCoTab ya deja la otra en display:none
