@@ -500,6 +500,7 @@
           <tr><td>Efectivo + costo (3%)</td><td>Efectivo a entregar + Costo financiero.</td></tr>
         </tbody>
       </table>
+      <p>El botón <strong>"✓ Pagado"</strong> de cada fila (o "✓ Pagado" por día, que marca todas las de esa fecha juntas) saca ese compromiso de los 4 números de arriba — sigue existiendo, solo se oculta de la lista activa (hay un botón "▼ Ver N pagados" para volver a verlos, con "↺ Desmarcar" si te equivocaste). A pedido tuyo, <strong>sincroniza en la nube</strong> (Supabase, tabla "fin_pagados") — antes quedaba solo en este navegador, así que si lo marcabas vos, a otra persona en su computadora no le aparecía.</p>
 
       <h2>④ Modo B</h2>
       <div class="leeme-flow">Sheet compartido <b>"resumen"</b> (mismo Sheet ID para las dos empresas, una fila por empresa+concepto) <span class="arrow">→</span> Pesos / Dólares / Cheques en caja</div>
@@ -584,6 +585,7 @@
           <tr><td>Cotización USD (la tipeás vos)</td><td>Conversión de Dólares en caja</td></tr>
           <tr><td>BAVSA Trade Food (la cargás vos, sincroniza en la nube)</td><td>Tenencia/Garantía/Caución/Disponible Caución</td></tr>
           <tr><td>Productos TF Carnes (la cargás vos, sincroniza en la nube)</td><td>Stock Medias, Stock Cajas</td></tr>
+          <tr><td>"✓ Pagado" de Financiera (lo marcás vos, sincroniza en la nube)</td><td>Compromisos, Efectivo a entregar, Costo financiero, Efectivo + costo</td></tr>
           <tr><td>Cálculo (no tiene fuente propia)</td><td>Disponible para operar, Fondos disponibles, Saldo fin/Disponible del Cash Flow, ambas Posición (Modo A y B)</td></tr>
         </tbody>
       </table>
@@ -733,6 +735,6 @@
 </script>
 
 <script src="js/app.js?v=1"></script>
-<script src="js/app-patches.js?v=21"></script>
+<script src="js/app-patches.js?v=22"></script>
 </body>
 </html>

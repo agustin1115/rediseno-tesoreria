@@ -290,6 +290,54 @@ function toggleStock(tipo){
   renderResumen();
 }
 
+// ── "✓ Pagado" (Compromisos de Efectivo · Financiera) sincroniza en la nube
+// ─────────────────────────────────────────────────────────────────────
+// _finPagados (app.js) vivía solo en localStorage — si vos marcabas un
+// compromiso como pagado, a otra persona en su navegador no le aparecía.
+// Acá se engancha cada marcado/desmarcado para que también escriba en
+// Supabase (tabla "fin_pagados": 1 fila por ID pagado — insertar = marcar,
+// borrar = desmarcar, mismo criterio que una fila = "está en el Set") y al
+// cargar la página se trae lo que haya en la nube.
+async function syncFinPagadoToSupabase(id, pagado){
+  try {
+    const result = pagado
+      ? await sb.from('fin_pagados').upsert({ client_id: id })
+      : await sb.from('fin_pagados').delete().eq('client_id', id);
+    if (result.error) throw result.error;
+  } catch(e) {
+    console.warn('[Supabase] No se pudo sincronizar "pagado" en la nube (queda guardado solo en este navegador):', e.message);
+  }
+}
+(async function hydrateFinPagadosFromSupabase(){
+  try {
+    const { data, error } = await sb.from('fin_pagados').select('client_id');
+    if (error) throw error;
+    if (data && data.length) {
+      data.forEach(r => _finPagados.add(r.client_id));
+      saveFinPagados();
+      renderFinanciera();
+    }
+  } catch(e) {
+    console.warn('[Supabase] No se pudo sincronizar "pagado", se usa el caché local:', e.message);
+  }
+})();
+
+const _origToggleFinPagado = toggleFinPagado;
+toggleFinPagado = function(id){
+  const seraPagado = !_finPagados.has(id);
+  _origToggleFinPagado(id);
+  syncFinPagadoToSupabase(id, seraPagado);
+};
+
+const _origMarcarDiaPagado = marcarDiaPagado;
+marcarDiaPagado = function(k){
+  const comp = (st.tfc.compromisos||[]).filter(c => dKey(c.fechaEntrega)===k);
+  const todosPagados = comp.every(c => _finPagados.has(c.id));
+  const seranPagados = !todosPagados;
+  _origMarcarDiaPagado(k);
+  comp.forEach(c => syncFinPagadoToSupabase(c.id, seranPagados));
+};
+
 // ── Cheques cargados a mano en "Cartera de Cheques" ─────────────────
 // A veces hay un cheque real en cartera que no viene ni del Excel del banco
 // ni del Sheet de físicos (llegó por otro medio, se traspapeló el archivo,
