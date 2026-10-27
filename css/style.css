@@ -543,6 +543,13 @@ tr.rs-row-off td{text-decoration:line-through}
 @media print {
   .topbar,.subbar,.tabbar,.ov-overlay,.detail-filters,.d-chk,
   .detail-tabs button,.btn-dsel-clear,.detail-sel-bar{display:none!important}
+  /* .ov-panel (el panel lateral de "+ Agregar cheque"/ingresos/pagos) se
+     oculta con un transform:translateX(100%), no con display:none — Safari
+     no siempre respeta ese transform al armar el PDF, así que el panel
+     (640px, fondo blanco + sombra oscura a la izquierda) puede terminar
+     pegado al borde derecho de CADA hoja como una franja gris vertical.
+     display:none lo saca del todo, sin depender del transform. */
+  .ov-panel{display:none!important}
   /* La franja gris vertical del costado del PDF es la propia scrollbar de
      la página (si tenés "Mostrar barras de desplazamiento: Siempre" en
      Preferencias del Sistema, Safari la captura en el PDF) — con esto no
