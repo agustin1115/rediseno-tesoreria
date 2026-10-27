@@ -563,10 +563,17 @@ tr.rs-row-off td{text-decoration:line-through}
   .print-resumen-header{display:flex;align-items:center;gap:16px;margin:0 0 14px;padding-bottom:10px;border-bottom:2px solid #333}
   .print-resumen-logo{height:50px;width:auto;max-width:220px;object-fit:contain;-webkit-print-color-adjust:exact;print-color-adjust:exact}
   .print-resumen-title{font-family:'Teko',sans-serif;font-size:22px;font-weight:600;color:#333}
-  .print-resumen-tables{display:flex;gap:18px}
-  .print-resumen-table{flex:1;border-collapse:collapse;width:100%}
+  /* min-width:0 es necesario porque una <table> como ítem flex tiene un
+     min-width implícito = su contenido sin achicar (filas como "Incobrables
+     (desactivado)" + un número largo) — sin esto, la tabla de Modo B no se
+     achica para entrar en la página y se corta contra el borde derecho.
+     table-layout:fixed hace que las columnas se repartan el ancho asignado
+     en vez de estirarse por el contenido. */
+  .print-resumen-tables{display:flex;gap:18px;width:100%}
+  .print-resumen-table{flex:1 1 0;min-width:0;width:100%;table-layout:fixed;border-collapse:collapse}
   .print-resumen-table caption,.print-resumen-table thead th{text-align:left;font-size:12px;font-weight:700;padding:4px 6px;border-bottom:2px solid #333}
   .print-resumen-table td{padding:4px 6px;font-size:11px;border-bottom:1px solid #ddd}
-  .print-resumen-table td.rs-val{text-align:right;font-variant-numeric:tabular-nums}
+  .print-resumen-table td.rs-label{width:62%;word-break:break-word}
+  .print-resumen-table td.rs-val{width:38%;text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
   @page{margin:1.5cm;size:A4 landscape}
 }
