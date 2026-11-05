@@ -77,7 +77,7 @@ guardado en `localStorage` **y** en Supabase (mismo proyecto que
 
 | KPI | De dónde sale |
 |---|---|
-| **Saldo bancos** | Sheet "Reporte Tesorería" de cada empresa (fila "TOTAL"), o el .xlsm de respaldo si el Sheet falla. Para TFC es la suma de **solo** los bancos operativos Galicia+Macro+CMF (`tfcOpBancos()`), no el total de la fila TOTAL — BAVSA se muestra aparte. |
+| **Saldo bancos** | Sheet "Reporte Tesorería" de cada empresa (fila "TOTAL"), o el .xlsm de respaldo si el Sheet falla. Para TFC es **solo** el banco operativo CMF (`tfcOpBancos()`), no el total de la fila TOTAL — BAVSA se muestra aparte. |
 | **Acuerdos descubierto** | Misma fila del Sheet, columna de al lado del saldo. |
 | **Disponible para operar** | Saldo bancos + Acuerdos descubierto. |
 | **Saldo BAVSA** (solo TFC) | Fila del banco "BAVSA" dentro del mismo Sheet "Reporte Tesorería" — no es una fuente separada. |
@@ -89,7 +89,7 @@ guardado en `localStorage` **y** en Supabase (mismo proyecto que
 ### Cash Flow proyectado (tabla, `buildCF()` en `app.js`)
 
 Cada fila es un día. **Saldo inicio** del primer día = Saldo bancos (TFC:
-solo Galicia+Macro+CMF); de ahí en adelante es el Saldo fin del día
+solo CMF); de ahí en adelante es el Saldo fin del día
 anterior. Por día:
 - **Chq emitidos**: cheques del Sheet "Ch. Emitidos" cuya fecha de débito cae ese día.
 - **Pagos**: ítems de Cuentas a pagar (Excel manual) con vencimiento ese día, más cualquier pago manual que hayas cargado a mano en el panel de detalle.

@@ -712,8 +712,9 @@ function toggleShowFinPagados(){ _showFinPagados = !_showFinPagados; renderFinan
 const FIN_RATE = 0.03;
 const FIN_CAP  = 70_000_000;
 
-// Bancos operativos TFC (para KPIs y CF): Galicia, Macro, CMF
-const TFC_OP_BANKS = [/galicia/i, /macro/i, /cmf/i];
+// Bancos operativos TFC (para KPIs y CF): solo CMF, a pedido tuyo
+// (antes también sumaba Galicia y Macro).
+const TFC_OP_BANKS = [/cmf/i];
 const TFC_BAVSA_RE = /bavsa/i;
 function tfcOpBancos(){
   const bs = st.tfc.bancos || [];
@@ -966,7 +967,7 @@ function buildCF(co, days){
   const cutoff=new Date(today);cutoff.setDate(cutoff.getDate()-30);
   const nbd=nextBizDay(today);
   const nbdKey=dKey(nbd);
-  // Saldo inicial: solo saldo bancos operativos (TFC: Galicia+Macro+CMF; TF: total).
+  // Saldo inicial: solo saldo bancos operativos (TFC: CMF; TF: total).
   let saldo = co==='tfc' ? (tfcOpBancos().saldo??0) : (st[co].saldoBancos??0);
   const provItems=getProv(co);
   const provMan=getManuales(co,'prov');
@@ -1026,7 +1027,7 @@ function buildCF(co, days){
 // ─────────────────────────────────────────────────────
 function renderKPIs(co){
   const s=st[co];
-  // Para TFC: solo bancos operativos (Galicia, Macro, CMF)
+  // Para TFC: solo bancos operativos (CMF)
   let bancos, desc;
   if(co==='tfc'){
     const op=tfcOpBancos();

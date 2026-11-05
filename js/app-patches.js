@@ -815,7 +815,7 @@ function toggleIncobrables(modo){
 // buildResumenPrintTable() (PDF, más abajo), así los dos muestran siempre
 // exactamente los mismos números sin duplicar ninguna fórmula.
 function computeResumen(){
-  // Bancos: TF Carnes usa solo los bancos operativos (Galicia/Macro/CMF), igual
+  // Bancos: TF Carnes usa solo los bancos operativos (CMF), igual
   // que la tarjeta "Saldo bancos" de su panel (tfcOpBancos()).
   const opTfc = tfcOpBancos();
   const bancosTfc = opTfc.saldo;

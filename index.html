@@ -447,7 +447,7 @@
 
       <h3>Saldo bancos</h3>
       <div class="leeme-flow">Sheet <b>"Reporte Tesorería"</b> <span class="arrow">→</span> fila <b>TOTAL</b>, columna de saldo <span class="arrow">→</span> <code>parseReporte()</code> <span class="arrow">→</span> KPI <b>"Saldo bancos"</b></div>
-      <p>Para <strong>TF Carnes</strong> es un caso especial: en vez de la fila TOTAL de todo el Sheet, se suman <strong>solo</strong> los bancos operativos (Galicia + Macro + CMF) — BAVSA se muestra aparte, no se mezcla acá. Para <strong>Trade Food</strong> sí es directamente la fila TOTAL completa.</p>
+      <p>Para <strong>TF Carnes</strong> es un caso especial: en vez de la fila TOTAL de todo el Sheet, se suma <strong>solo</strong> el banco operativo CMF — BAVSA se muestra aparte, no se mezcla acá. Para <strong>Trade Food</strong> sí es directamente la fila TOTAL completa.</p>
       <p>Si el Sheet no responde, la página usa el último archivo <code>.xlsm</code> que hayas subido a mano como respaldo (mismo formato, mismas dos pestañas del Excel).</p>
 
       <h3>Acuerdos descubierto</h3>
@@ -734,7 +734,7 @@
   }
 </script>
 
-<script src="js/app.js?v=1"></script>
-<script src="js/app-patches.js?v=22"></script>
+<script src="js/app.js?v=2"></script>
+<script src="js/app-patches.js?v=23"></script>
 </body>
 </html>
